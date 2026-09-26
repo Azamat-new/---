@@ -1,0 +1,12 @@
+{
+  "name": "separator-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tiny todo CLI used to smoke-test the Separator workflow",
+  "type": "module",
+  "bin": { "todo": "./src/cli.js" },
+  "scripts": {
+    "test": "node --test test/",
+    "lint": "node --check src/cli.js && node --check src/store.js"
+  }
+}

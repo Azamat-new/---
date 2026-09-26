@@ -158,6 +158,9 @@ commands.help = () => {
   unit start <epic> <unit> --role r    inside an isolated worktree: checkout sep/<epic>/<unit>, write .sep-role
   unit run <epic> <unit> -- <cmd>      run a command, record it in evidence.json (evidence, not claims)
   unit finish <epic> <unit>            neutral commit of the worktree, record head sha
+  unit packet <epic> <unit> [--for r]  everything a role may know about the unit (card, zone, spike, defects, rulings)
+  unit note <epic> <unit> "<text>"     append to the unit's notes.md (what the next attempt should know)
+  mark <epic> [<unit>] k=v             set a driver-settable flag (audited, stage, class, ...)
   gate <epic> <unit> [--no-mutants]    mechanical gate on branch sep/<epic>/<unit> → gate.json (exit 1 on fail)
   sandbox <epic> <unit> [--lens l]     build a physically blind sandbox (2 neutral commits) → manifest.json
   blind <epic> <unit> --lens l         run a context-free lens headless in the sandbox → blind-<l>.json
@@ -165,7 +168,12 @@ commands.help = () => {
   decide <epic> <unit>                 decision table → decision.json; prints {action, target}
   merge <epic> <unit>                  verify decision hash, merge sep/<epic>/<unit> into integration
   card <epic> <unit>                   render the one-screen merge card / stuck card (markdown)
+  next <epic>                          what to do next (the state machine every driver follows)
+  answer <epic> "<text>"               record the human's answers / ruling (H0, H3)
+  approve <epic> [<unit>] [--contracts] human approval: H1 contracts or H2 merge card; --kill kills the epic
+  check-integration <epic>             run zone tests + invariants on the integration branch
   hook <guard>                         hook entry (stdin JSON): guard-write | guard-bash | guard-blind
+  lint                                 check workflows (parse), agents (frontmatter), skills, schemas, settings
   selftest                             prove the harness: hooks deny, sandbox is blind, gate fails a planted bug
   validate <file> --schema <name>      validate a JSON artifact against .separator/schemas/<name>.json
 `);
@@ -262,10 +270,11 @@ commands.epic = ({ pos, opt }) => {
     if (tri.irreversible) { floor = classMax(floor, 'T3'); signals.push('irreversible'); }
     if ((tri.unknowns || []).length && floor === 'T0') { floor = 'T1'; signals.push('unknowns'); }
     const cls = classMax(floor, tri.class || 'T0');
-    const st = loadState(e); st.class = cls; st.class_floor = floor; st.stage = 'classified'; saveState(e, st);
+    const unmapped = paths.filter(p => { const zn = zoneFor(p); return zn.id === 'default' || zn.confidence === 'unmapped'; });
+    const st = loadState(e); st.class = cls; st.class_floor = floor; st.stage = 'classified'; st.unmapped_paths = unmapped; saveState(e, st);
     tri.class_final = cls; tri.class_floor = floor; tri.floor_signals = signals; writeJSON(path.join(epicDir(e), 'triage.json'), tri);
     metric(e, null, { stage: 'intake', event: 'classified', class: cls });
-    return out({ epic: e, class: cls, floor, signals, lane: policy().lanes[cls] });
+    return out({ epic: e, class: cls, floor, signals, unmapped, lane: policy().lanes[cls] });
   }
   fail('usage: sep epic new|classify');
 };
@@ -313,9 +322,12 @@ commands.plan = ({ pos }) => {
   const missing = acc.filter(a => !covered.has(a));
   if (missing.length) errors.push(`acceptance criteria without a unit: ${missing.join(', ')}`);
   const schedule = { epic: e, class: st.class, waves, wip_limit: Math.min(5, units.length), lane, generated: nowISO() };
+  if (errors.length) { st.stage = 'plan_failed'; st.plan_failures = (st.plan_failures || 0) + 1; st.plan_errors = errors; saveState(e, st); }
   if (!errors.length) {
+    st.plan_errors = null;
     writeJSON(path.join(epicDir(e), 'schedule.json'), schedule);
-    for (const u of units) { const d = unitDir(e, u.id); fs.mkdirSync(path.join(d, 'tests'), { recursive: true }); writeJSON(path.join(d, 'card.json'), Object.assign({ base_sha: st.base_sha, epic: e, class: u.class || st.class, canary: st.canary }, u)); unitState(st, u.id); }
+    for (const u of units) { const d = unitDir(e, u.id); const prev = st.units[u.id]; if (prev && (prev.merged || prev.parked)) continue; fs.mkdirSync(path.join(d, 'tests'), { recursive: true }); writeJSON(path.join(d, 'card.json'), Object.assign({ base_sha: st.base_sha, epic: e, class: u.class || st.class, canary: st.canary }, u)); const us = unitState(st, u.id); if (us.stage === 'replan' || us.stage === 'spike') { us.stage = 'planned'; us.round = 0; } }
+    for (const [uid, us] of Object.entries(st.units)) if (!units.some(x => x.id === uid) && !us.merged) us.stage = 'dropped';
     st.stage = 'planned'; saveState(e, st);
   }
   metric(e, null, { stage: 'decompose', event: 'plan_check', ok: !errors.length, units: units.length, waves: waves.length });
@@ -373,7 +385,35 @@ commands.unit = ({ pos, opt }) => {
     metric(e, u, { stage: us.stage, event: 'unit_finish', head, files: ev.files_touched.length, commands: ev.commands.length });
     return out({ head_sha: head, files_touched: ev.files_touched, commands_recorded: ev.commands.length });
   }
-  fail('usage: sep unit start|run|finish');
+  if (sub === 'packet') {
+    const d = unitDir(e, u); const zone = zoneById(card.zone);
+    const st = loadState(e); const us = unitState(st, u);
+    const defects = exists(path.join(d, 'defects')) ? fs.readdirSync(path.join(d, 'defects')).map(f => readJSON(path.join(d, 'defects', f))) : [];
+    const pk = { epic: e, unit: u, role: opt.for || 'executor', class: us.class || card.class, round: us.round || 0, branch: branchOf(e, u), base_sha: card.base_sha, card, zone: { id: zone.id, commands: zone.commands, test_globs: zone.test_globs, invariants: zone.invariants, persona: zone.persona },
+      acceptance: exists(path.join(epicDir(e), 'ACCEPTANCE.md')) ? fs.readFileSync(path.join(epicDir(e), 'ACCEPTANCE.md'), 'utf8') : null,
+      spike: readJSON(path.join(d, 'spike.json'), null), defects, notes: exists(path.join(d, 'notes.md')) ? fs.readFileSync(path.join(d, 'notes.md'), 'utf8') : null,
+      rulings: exists(path.join(SEP, 'rulings.md')) ? fs.readFileSync(path.join(SEP, 'rulings.md'), 'utf8').split('\n').filter(l => l.startsWith('- ')).slice(-20) : [],
+      lessons: exists(path.join(SEP, 'lessons.md')) ? fs.readFileSync(path.join(SEP, 'lessons.md'), 'utf8').split('\n').filter(l => l.startsWith('- ')).slice(-20) : [] };
+    if ((opt.for || '') === 'inspector') { pk.gate = readJSON(path.join(d, 'gate.json'), null); pk.evidence = readJSON(path.join(d, 'evidence.json'), null); pk.diff_stat = git(['diff', '--stat', `${card.base_sha}..${branchOf(e, u)}`]).out; pk.prior_inspections = fs.readdirSync(d).filter(f => /^inspect-.*\.json$/.test(f)).map(f => readJSON(path.join(d, f))); }
+    if ((opt.for || '') === 'prober') { delete pk.defects; }
+    return out(pk);
+  }
+  if (sub === 'note') {
+    const text = pos.slice(3).join(' '); if (!text) fail('usage: sep unit note <epic> <unit> "<text>"');
+    fs.appendFileSync(path.join(unitDir(e, u), 'notes.md'), `- [${nowISO()}] ${text}\n`); return out({ ok: true });
+  }
+  fail('usage: sep unit start|run|finish|packet|note');
+};
+
+// --- mark: sanctioned way for a driver to set simple state flags -------------------------------
+commands.mark = ({ pos }) => {
+  const e = pos[0]; if (!e) fail('usage: sep mark <epic> [<unit>] key=value ...');
+  const st = loadState(e); let target = st; let rest = pos.slice(1);
+  if (rest.length && !rest[0].includes('=')) { target = unitState(st, rest[0]); rest = rest.slice(1); }
+  const ALLOWED = new Set(['audited', 'acknowledged_parked', 'stage', 'class', 'intent_match', 'contracts_packet', 'parked', 'spike_verdict']);
+  const set = {};
+  for (const kv of rest) { const [k, v] = kv.split('='); if (!ALLOWED.has(k)) fail(`key ${k} is not settable by drivers`); target[k] = v === 'true' ? true : v === 'false' ? false : v === 'null' ? null : v; set[k] = target[k]; if (k === 'parked' && v === 'null') delete target.parked; }
+  saveState(e, st); out({ ok: true, set });
 };
 
 // --- gate ------------------------------------------------------------------------------------
@@ -620,7 +660,7 @@ commands.blind = ({ pos, opt }) => {
   rec.leak_check.clean = !rec.leak_check.canary_hit && rec.leak_check.narrative_terms.length === 0;
   if (rec.verdict !== 'INVALID' && (!rec.evidence || !rec.evidence.length)) rec.verdict_weight = 0; else rec.verdict_weight = 1;
   writeJSON(path.join(unitDir(e, u), 'blind', `blind-${lens}.json`), rec);
-  const st = loadState(e); const us = unitState(st, u); us.stage = 'blind'; saveState(e, st);
+  const st = loadState(e); const us = unitState(st, u); us.stage = 'blinded'; us.calls = (us.calls || 0) + 1; saveState(e, st);
   metric(e, u, { stage: 'blind', event: 'lens', lens, verdict: rec.verdict, weight: rec.verdict_weight, leak_clean: rec.leak_check.clean, ms: rec.ms });
   out({ lens, verdict: rec.verdict, weight: rec.verdict_weight, findings: (rec.findings || []).length, evidence: (rec.evidence || []).length, leak_check: rec.leak_check, inferred_intent: rec.inferred_intent || null, error: rec.error || null });
 };
@@ -709,7 +749,7 @@ commands.ratchet = ({ pos }) => {
     if (f.repro && f.repro.cmd) { const tp = path.join(unitDir(e, u), 'tests', `regress_${sig}.sh`); fs.writeFileSync(tp, `#!/bin/sh\n# regression from finding ${sig}: ${(f.claim || '').replace(/\n/g, ' ')}\n# expect: ${f.repro.expect}\n${f.repro.cmd}\n`); dc.regress = tp; }
     cards.push(dc);
   }
-  saveState(e, st);
+  us.stage = 'inspected'; saveState(e, st);
   metric(e, u, { stage: 'ratchet', event: 'ratchet', new_sigs: cards.filter(c => !c.repeat).length, repeats: cards.filter(c => c.repeat).length });
   out({ cards, escalate, sigs_seen: us.sigs_seen });
 };
@@ -733,7 +773,7 @@ commands.decide = ({ pos }) => {
   inputs.Bs = sec ? sec.verdict : 'skipped';
   inputs.L = blinds.every(b => !b.leak_check || b.leak_check.clean) ? 'clean' : 'dirty';
   inputs.E = blinds.every(b => b.verdict === 'INVALID' || (b.evidence && b.evidence.length)) ? 'ok' : 'empty';
-  inputs.M = st.intent_match || 'unknown'; // set by sep card/judge step: MATCH | MISMATCH | unknown
+  inputs.M = us.intent_match || st.intent_match || 'UNKNOWN'; // set by the driver after the cold lens: MATCH | MISMATCH | UNKNOWN
   const blindBlocks = blinds.flatMap(b => (b.findings || []).filter(f => f.severity === 'blocker' && f.repro && f.repro.cmd));
   const holds = blinds.concat(insp).flatMap(x => (x.findings || []).filter(f => !f.repro && f.hazard && pol.hazard_classes.includes(f.hazard) && !f.refuted));
   inputs.H = holds.length; inputs.K = { execute: us.sendbacks.execute, contract: us.sendbacks.contract, decompose: us.sendbacks.decompose, intake: us.sendbacks.intake, exec_retries: us.exec_retries, integration_rounds: us.integration_rounds, calls: us.calls, blind_reruns: us.blind_reruns };
@@ -770,7 +810,8 @@ commands.decide = ({ pos }) => {
   if (action === 'RERUN-BLIND') us.blind_reruns++;
   if (action === 'PROMOTE') { us.promotion_handled = true; us.class = target; }
   if (action === 'ESCALATE') { st.human_escalations++; us.parked = why; }
-  us.stage = action.toLowerCase(); us.last_decision = { row, action, target }; saveState(e, st);
+  const NEXT = { MERGE: 'merge', 'MERGE-CARD': 'card', HOLD: 'card', ESCALATE: 'card', PROMOTE: 'inspect', 'RERUN-BLIND': 'blind', SENDBACK: { S5: 'execute', S4: 'spike', S2: 'replan', S0: 'ask' }[target] || 'replan' };
+  us.stage = NEXT[action] || action.toLowerCase(); us.last_decision = { row, action, target, why }; if (action === 'SENDBACK' && target === 'S5') us.round = (us.round || 0) + 1; saveState(e, st);
   metric(e, u, { stage: 'verdict', event: 'decide', row, action, target, class: cls });
   out({ row, action, target, why, inputs: Object.assign({}, inputs, { K: undefined }), counters: us.sendbacks, exec_retries: us.exec_retries });
 };
@@ -816,6 +857,7 @@ commands.card = ({ pos }) => {
   lines.push(`Diff sha256 ${dec.diff_sha256 || '-'} (any code change after this invalidates the card)`);
   lines.push(dec.action === 'ESCALATE' ? `Options: [1] send back with a ruling  [2] split the unit  [3] kill   → sep answer ${e} ${u} <option>` : `[approve]  touch ${path.relative(ROOT, path.join(unitDir(e, u), 'MERGE_APPROVED'))}   [send back]  write a ruling in .separator/rulings.md and run sep decide again   [kill]`);
   const md = lines.join('\n') + '\n';
+  us.stage = dec.action === 'ESCALATE' ? 'parked' : 'awaiting_human'; if (dec.action === 'ESCALATE') us.parked = dec.why; saveState(e, st);
   fs.mkdirSync(path.join(epicDir(e), 'merge-cards'), { recursive: true });
   fs.writeFileSync(path.join(epicDir(e), 'merge-cards', `${u}${dec.action === 'ESCALATE' ? '-stuck' : ''}.md`), md);
   process.stdout.write(md);
@@ -895,6 +937,113 @@ commands.selftest = () => {
   for (const r of results) process.stdout.write(`${r.ok ? 'ok  ' : 'FAIL'} ${r.name}${r.ok ? '' : ' — ' + r.detail}\n`);
   process.stdout.write(`${ok ? 'SELFTEST PASSED' : 'SELFTEST FAILED'} (${results.filter(r => r.ok).length}/${results.length})\n`);
   if (!ok) process.exit(1);
+};
+
+// --- next: the deterministic state machine every driver (workflow, bash, human) follows -------
+commands.next = ({ pos }) => {
+  const e = pos[0]; if (!e) fail('usage: sep next <epic>');
+  const d = epicDir(e); if (!exists(d)) fail(`no epic ${e}`);
+  const st = loadState(e); const pol = policy(); const cls = st.class || 'T1'; const lane = pol.lanes[cls];
+  const has = (f) => exists(path.join(d, f));
+  const res = (step, extra) => out(Object.assign({ epic: e, step, class: st.class || null, stage: st.stage }, extra || {}));
+  if (st.killed) return res('done', { reason: 'killed' });
+  if (!has('triage.json') || !has('ACCEPTANCE.md')) return res('triage', { request: fs.readFileSync(path.join(d, 'request.md'), 'utf8').trim(), has_zones: (zonesCfg().zones || []).length > 0 });
+  if (st.stage === 'intake') return res('classify');
+  if (st.stage === 'classified') {
+    const ic = readJSON(path.join(d, 'intent-check.json'), {});
+    const tri = readJSON(path.join(d, 'triage.json'), {});
+    const qs = (tri.questions || []).filter(q => q && q.text);
+    const noDefault = qs.some(q => !q.default);
+    const needHuman = (CLASSES.indexOf(cls) >= 2 && ((tri.ambiguity || 0) >= 0.5 || qs.length)) || ic.mismatch === true || noDefault;
+    if (needHuman && !has('answers.md')) { if (!has('questions.md')) fs.writeFileSync(path.join(d, 'questions.md'), '# Questions (answer in answers.md; a missing answer means the default)\n' + qs.map(q => `- ${q.id || ''}: ${q.text}\n  default: ${q.default || '(none)'} — ${q.why || ''}`).join('\n') + (ic.mismatch ? '\n- INTENT: the independent reading of the request differs from the triage: ' + JSON.stringify(ic.missing || []) : '') + '\n'); return res('ask', { gate: 'H0', questions: qs, intent_mismatch: ic.mismatch === true, file: path.join(d, 'questions.md') }); }
+    if ((st.unmapped_paths || []).length && !has('zones.patch.json')) return res('cartography', { unmapped: st.unmapped_paths });
+    return res('plan', { lane, retry: st.plan_errors || null });
+  }
+  if (st.stage === 'plan_failed') return res(st.plan_failures >= 2 ? 'human' : 'plan', { gate: 'H3', reason: 'plan check failed twice', errors: st.plan_errors });
+  if (st.stage === 'planned') {
+    const nUnits = Object.keys(st.units).length;
+    if (!st.audited && (CLASSES.indexOf(cls) >= 2 || nUnits > 1)) return res('audit');
+    const toSpike = Object.entries(st.units).filter(([u, s]) => s.stage === 'planned' && cls !== 'T0').map(([u]) => u);
+    if (toSpike.length) return res('spike', { units: toSpike });
+    if (CLASSES.indexOf(cls) >= 2 && !has('CONTRACTS_APPROVED')) return res('human', { gate: 'H1', file: path.join(d, 'contracts-packet.md') });
+    st.stage = 'building'; saveState(e, st);
+  }
+  if (st.stage === 'building' || st.stage === 'replan') {
+    const units = st.units; const dag = readJSON(path.join(d, 'dag.json'), { units: [] }); const deps = Object.fromEntries((dag.units || []).map(u => [u.id, u.depends_on || []]));
+    const asks = Object.entries(units).filter(([, s]) => s.stage === 'ask'); if (asks.length) return res('ask', { gate: 'H0', units: asks.map(([u]) => u), reason: 'a reviewer found the request ambiguous; see units/<u>/defects' });
+    const replan = Object.entries(units).filter(([, s]) => s.stage === 'replan').map(([u]) => u); if (replan.length) return res('replan', { units: replan });
+    const approved = Object.entries(units).filter(([u, s]) => s.stage === 'awaiting_human' && exists(path.join(unitDir(e, u), 'MERGE_APPROVED'))).map(([u]) => u); if (approved.length) return res('merge', { units: approved });
+    const active = new Set(['planned', 'spiked', 'execute', 'executed', 'gated', 'gate_failed', 'inspect', 'inspected', 'blind', 'blinded', 'merge', 'card', 'spike']);
+    const ready = Object.entries(units).filter(([u, s]) => active.has(s.stage) && !s.parked && (deps[u] || []).every(dd => units[dd] && units[dd].merged)).map(([u, s]) => { const cd = loadCard(e, u) || {}; return { id: u, stage: s.stage, round: s.round || 0, class: s.class || cls, acceptance: cd.acceptance || [], title: cd.title || '' }; });
+    if (ready.length) return res('units', { units: ready.slice(0, Math.min(5, ready.length)), lane });
+    const waiting = Object.entries(units).filter(([, s]) => s.stage === 'awaiting_human').map(([u]) => u); if (waiting.length) return res('human', { gate: 'H2', units: waiting });
+    const parked = Object.entries(units).filter(([, s]) => s.parked).map(([u]) => u);
+    const blocked = Object.entries(units).filter(([u, s]) => !s.merged && !s.parked && (deps[u] || []).some(dd => units[dd] && units[dd].parked)).map(([u]) => u);
+    if (parked.length && !st.acknowledged_parked) return res('human', { gate: 'H3', units: parked, blocked, file: path.join(d, 'merge-cards') });
+    st.stage = 'learn'; saveState(e, st);
+  }
+  if (st.stage === 'learn') return res('learn', { merged: Object.entries(st.units).filter(([, s]) => s.merged).map(([u]) => u), parked: Object.entries(st.units).filter(([, s]) => s.parked).map(([u]) => u) });
+  return res('done', { merged: Object.entries(st.units).filter(([, s]) => s.merged).map(([u]) => u), parked: Object.entries(st.units).filter(([, s]) => s.parked).map(([u]) => u) });
+};
+
+// --- human actions ---------------------------------------------------------------------------
+commands.answer = ({ pos }) => {
+  const e = pos[0]; const text = pos.slice(1).join(' '); if (!e || !text) fail('usage: sep answer <epic> "<answers or rulings text>"');
+  fs.appendFileSync(path.join(epicDir(e), 'answers.md'), text + '\n');
+  appendLine(path.join(SEP, 'rulings.md'), `- R${Date.now().toString(36)} [${e}] ${text.replace(/\n/g, ' ')} (human, ${nowISO().slice(0, 10)})`);
+  const st = loadState(e);
+  for (const [u, s] of Object.entries(st.units)) if (s.stage === 'ask') { s.stage = 'execute'; s.round = (s.round || 0) + 1; }
+  saveState(e, st); metric(e, null, { stage: 'human', event: 'answer' });
+  out({ ok: true, answers: path.join(epicDir(e), 'answers.md') });
+};
+commands.approve = ({ pos, opt }) => {
+  const e = pos[0]; if (!e) fail('usage: sep approve <epic> [<unit>] [--contracts] [--kill]');
+  if (opt.contracts) { fs.writeFileSync(path.join(epicDir(e), 'CONTRACTS_APPROVED'), nowISO() + '\n'); metric(e, null, { stage: 'human', event: 'contracts_approved' }); return out({ ok: true, gate: 'H1' }); }
+  if (opt.kill) { const st = loadState(e); st.killed = true; saveState(e, st); return out({ ok: true, killed: e }); }
+  const u = pos[1]; if (!u) fail('unit required');
+  fs.writeFileSync(path.join(unitDir(e, u), 'MERGE_APPROVED'), nowISO() + '\n');
+  const st = loadState(e); const us = unitState(st, u); if (us.parked && opt.resume) { delete us.parked; us.stage = opt.resume; st.acknowledged_parked = true; }
+  saveState(e, st); metric(e, u, { stage: 'human', event: 'approved' });
+  out({ ok: true, gate: 'H2', unit: u });
+};
+commands['check-integration'] = ({ pos }) => {
+  const e = pos[0]; if (!e) fail('usage: sep check-integration <epic>');
+  const pol = policy(); const ib = pol.integration_branch || 'integration';
+  const st = loadState(e); const zonesTouched = new Set();
+  for (const [u, s] of Object.entries(st.units)) if (s.merged) { const card = loadCard(e, u); if (card) zonesTouched.add(card.zone); }
+  const results = withWorktree(ib, (wt) => [...zonesTouched].map(z => { const zone = zoneById(z); return { zone: z, test: runCmd(zone.commands.test, wt, pol.gate.max_gate_seconds), invariants: (zone.invariants || []).filter(i => i.check).map(i => Object.assign({ text: i.text }, runCmd(i.check, wt, pol.gate.max_gate_seconds))) }; }));
+  const ok = results.every(r => r.test.ok && r.invariants.every(i => i.ok));
+  writeJSON(path.join(epicDir(e), 'integration-check.json'), { ok, results, at: nowISO() });
+  metric(e, null, { stage: 'integrate', event: 'check', ok });
+  out({ ok, zones: results.map(r => ({ zone: r.zone, test: r.test.ok, invariants: r.invariants.map(i => i.ok) })) });
+  if (!ok) process.exit(1);
+};
+
+// --- lint: the repository's own checks for the funnel files ---------------------------------------
+commands.lint = () => {
+  const problems = [];
+  const wfDir = path.join(ROOT, '.claude', 'workflows');
+  if (exists(wfDir)) for (const f of fs.readdirSync(wfDir).filter(f => f.endsWith('.js'))) {
+    const src = fs.readFileSync(path.join(wfDir, f), 'utf8');
+    if (!/^export const meta = \{/m.test(src)) problems.push(`${f}: missing 'export const meta = {'`);
+    if (/Date\.now\(|Math\.random\(|new Date\(\)/.test(src)) problems.push(`${f}: Date.now/Math.random/new Date() break workflow resume`);
+    const body = src.replace(/^export const meta = /m, 'const meta = ');
+    try { new (Object.getPrototypeOf(async function () { }).constructor)('agent', 'parallel', 'pipeline', 'phase', 'log', 'args', 'budget', 'workflow', body); } catch (e) { problems.push(`${f}: ${e.message}`); }
+  }
+  const settings = path.join(ROOT, '.claude', 'settings.json'); if (exists(settings)) { try { readJSON(settings); } catch (e) { problems.push('settings.json: ' + e.message); } }
+  const agDir = path.join(ROOT, '.claude', 'agents');
+  if (exists(agDir)) for (const f of fs.readdirSync(agDir).filter(f => f.endsWith('.md'))) {
+    const a = parseAgentFile(path.join(agDir, f)); const fm = /^---\n([\s\S]*?)\n---/.exec(fs.readFileSync(path.join(agDir, f), 'utf8'));
+    if (!fm) { problems.push(`agents/${f}: no frontmatter`); continue; }
+    const name = /^name:\s*(.+)$/m.exec(fm[1]); if (!name || name[1].trim() + '.md' !== f) problems.push(`agents/${f}: name must equal the file name`);
+    if (!/^description:\s*.+/m.test(fm[1])) problems.push(`agents/${f}: description required`);
+    if (/permissionMode:\s*bypassPermissions/.test(fm[1])) problems.push(`agents/${f}: bypassPermissions is forbidden for funnel agents`);
+    if (!a.prompt || a.prompt.length < 80) problems.push(`agents/${f}: body (system prompt) too short`);
+  }
+  const scDir = path.join(SEP, 'schemas'); if (exists(scDir)) for (const f of fs.readdirSync(scDir)) { try { readJSON(path.join(scDir, f)); } catch (e) { problems.push(`schemas/${f}: ${e.message}`); } }
+  const skDir = path.join(ROOT, '.claude', 'skills'); if (exists(skDir)) for (const d of fs.readdirSync(skDir)) { const sk = path.join(skDir, d, 'SKILL.md'); if (!exists(sk)) { problems.push('skills/' + d + ': SKILL.md missing'); continue; } const txt = fs.readFileSync(sk, 'utf8'); const nm = /^name:\s*(.+)$/m.exec(txt); if (!nm || nm[1].trim() !== d) problems.push('skills/' + d + ': frontmatter name must be ' + d); }
+  out({ ok: !problems.length, problems });
+  if (problems.length) process.exit(1);
 };
 
 // ---------------------------------------------------------------------------------------------

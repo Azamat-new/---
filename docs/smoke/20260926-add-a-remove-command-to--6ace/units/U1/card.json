@@ -1,0 +1,134 @@
+{
+  "base_sha": "474f915e6cbb033f3e5d689464f1133e1a4a1fbc",
+  "epic": "20260926-add-a-remove-command-to--6ace",
+  "class": "T1",
+  "canary": "SEP-CANARY-65823966",
+  "id": "U1",
+  "title": "todo remove <id>: store.remove + cli dispatch + usage line",
+  "goal": "Add `remove(state, id)` to examples/demo/src/store.js (mirrors `complete`: find by Number(id), throw Error(`no item ${id}`) when absent, otherwise splice it out and return the item) and a `remove` case in examples/demo/src/cli.js that calls it BEFORE save() and returns `removed ${item.id}`, plus `todo remove <id>` in both the usage error string and the usage comment at the top of cli.js; add/done/list and the todo.json shape stay untouched.",
+  "zone": "demo",
+  "writes": [
+    "examples/demo/src/store.js",
+    "examples/demo/src/cli.js",
+    "examples/demo/test/remove.test.js"
+  ],
+  "test_writes": [
+    "examples/demo/test/acc_U1.test.js"
+  ],
+  "tests_sha": "96b3af7d44f93911647326f664d4f0585f79d0b7",
+  "reads": [
+    "examples/demo/src/cli.js",
+    "examples/demo/src/store.js",
+    "examples/demo/test/store.test.js",
+    "examples/demo/test/acc_U1.test.js",
+    "examples/demo/package.json"
+  ],
+  "depends_on": [],
+  "unknowns": [
+    "`todo remove` with no id at all: default (Q1) is to treat it like an unknown id -> `no item undefined`, non-zero exit, exactly as `todo done` does today (spike confirmed `done` with no id prints `no item undefined`, rc=1); no check pins this",
+    "id reuse after removing the highest id: default (Q2) keeps max+1 allocation, so C6 expects `added 3` after removing 1 from {1,2}",
+    "`removed <id>` echoes the stored numeric id (as `done <id>` does), not the raw argument; checks only use canonical ids so either reading passes",
+    "INFRA (not a code unknown): the executor must be started in a worktree that can `git checkout sep/<epic>/U1`; the prober worktree .claude/worktrees/wf_c0d7a44b-d05-15 still holds that branch (clean, at 7ef7f0d) and must be released from the main checkout before dispatch (see notes REPLAN-1/REPLAN-2)"
+  ],
+  "est_files": 3,
+  "est_lines": 45,
+  "acceptance": [
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7",
+    "A8"
+  ],
+  "serialized": [],
+  "checks": [
+    {
+      "id": "C1",
+      "maps_to": "A1",
+      "kind": "check",
+      "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha >/dev/null && out=$(TODO_FILE=$D/t.json node src/cli.js remove 1) && [ \"$out\" = \"removed 1\" ]",
+      "expect": "exit 0",
+      "timeout": 60
+    },
+    {
+      "id": "C2",
+      "maps_to": "A2",
+      "kind": "check",
+      "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js add beta >/dev/null && TODO_FILE=$F node src/cli.js add gamma >/dev/null && TODO_FILE=$F node src/cli.js remove 2 >/dev/null && out=$(TODO_FILE=$F node src/cli.js list) && [ \"$out\" = \"$(printf \"[ ] 1. alpha\\n[ ] 3. gamma\")\" ]",
+      "expect": "exit 0",
+      "timeout": 60
+    },
+    {
+      "id": "C3",
+      "maps_to": "A3",
+      "kind": "check",
+      "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha >/dev/null && { out=$(TODO_FILE=$D/t.json node src/cli.js remove 42 2>&1); rc=$?; [ $rc -ne 0 ] && [ \"$out\" = \"no item 42\" ]; }",
+      "expect": "exit 0",
+      "timeout": 60
+    },
+    {
+      "id": "C4",
+      "maps_to": "A4",
+      "kind": "check",
+      "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && before=$(TODO_FILE=$F node src/cli.js list) && cp $F $D/before.json && { err=$(TODO_FILE=$F node src/cli.js remove 42 2>&1); rc=$?; [ $rc -ne 0 ] && [ \"$err\" = \"no item 42\" ]; } && after=$(TODO_FILE=$F node src/cli.js list) && [ \"$before\" = \"$after\" ] && cmp -s $F $D/before.json",
+      "expect": "exit 0",
+      "timeout": 60
+    },
+    {
+      "id": "C5",
+      "maps_to": "A5",
+      "kind": "check",
+      "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js done 1 >/dev/null && out=$(TODO_FILE=$F node src/cli.js remove 1) && [ \"$out\" = \"removed 1\" ] && [ -z \"$(TODO_FILE=$F node src/cli.js list)\" ]",
+      "expect": "exit 0",
+      "timeout": 60
+    },
+    {
+      "id": "C6",
+      "maps_to": "A6",
+      "kind": "check",
+      "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js add beta >/dev/null && TODO_FILE=$F node src/cli.js remove 1 >/dev/null && [ \"$(TODO_FILE=$F node src/cli.js add gamma)\" = \"added 3\" ] && [ \"$(TODO_FILE=$F node src/cli.js done 2)\" = \"done 2\" ] && [ \"$(TODO_FILE=$F node src/cli.js list)\" = \"$(printf \"[x] 2. beta\\n[ ] 3. gamma\")\" ] && TODO_FILE=$F node -e 'const s=JSON.parse(require(\"fs\").readFileSync(process.env.TODO_FILE,\"utf8\")); if(!Array.isArray(s.items)||s.items.length!==2||!s.items.every(i=>typeof i.id===\"number\"&&typeof i.title===\"string\"&&typeof i.done===\"boolean\")) process.exit(1)'",
+      "expect": "exit 0",
+      "timeout": 60
+    },
+    {
+      "id": "C7",
+      "maps_to": "A7",
+      "kind": "check",
+      "cmd": "cd examples/demo && D=$(mktemp -d) && { out=$(TODO_FILE=$D/t.json node src/cli.js bogus 2>&1); rc=$?; [ $rc -ne 0 ] && printf \"%s\" \"$out\" | grep -q \"todo remove <id>\"; }",
+      "expect": "exit 0",
+      "timeout": 60
+    },
+    {
+      "id": "C8",
+      "maps_to": "A8",
+      "kind": "check",
+      "cmd": "cd examples/demo && node --test test/acc_U1.test.js",
+      "expect": "exit 0",
+      "timeout": 120
+    },
+    {
+      "id": "C9",
+      "maps_to": "A8",
+      "kind": "check",
+      "cmd": "cd examples/demo && npm test",
+      "expect": "exit 0",
+      "timeout": 120
+    }
+  ],
+  "must_not_touch": [
+    "examples/demo/package.json",
+    "examples/demo/test/store.test.js",
+    "examples/demo/test/acc_*",
+    "examples/demo/test/regress_*",
+    ".separator/**",
+    ".claude/**",
+    ".githooks/**",
+    "README.md",
+    "SEPARATOR.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/**"
+  ]
+}

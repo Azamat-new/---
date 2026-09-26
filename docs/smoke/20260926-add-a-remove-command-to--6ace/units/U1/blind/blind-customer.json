@@ -1,0 +1,163 @@
+{
+  "lens": "customer",
+  "unit": "U1",
+  "epic": "20260926-add-a-remove-command-to--6ace",
+  "launcher": "claude",
+  "ms": 78156,
+  "exit": 0,
+  "sandbox_tree_hash": "0233654442832167faafca1011308082df181fbe55d00f36320c4bd55c3cd20c",
+  "raw_result": "I have enough evidence now to finalize the verdict.\n\n```json\n{\n  \"knowledge_statement\": \"The acceptance list (SEP-ACCEPTANCE.md) says this change adds a `todo remove <id>` command to the demo CLI. On success it must print `removed <id>` and exit 0, and the removed item must disappear from `todo list` while every other item is unchanged (A1, A2). On an unknown id it must print `no item <id>`, exit non-zero, and leave `todo list` and the saved file byte-for-byte untouched (A3, A4). Removing an already-`done` item must work the same way as removing an open item (A5). Existing commands (`add`, `done`, `list`) and the shape of the saved todo.json (an `items` array of `{id:number, title:string, done:boolean}`) must keep working exactly as before (A6). An unknown command's usage/error message must now mention `todo remove <id>` (A7). Finally, `cd examples/demo && npm test` must pass, including tests that remove a known id and that reject an unknown id with `no item <id>` (A8). I know nothing else about why this change exists beyond what these eight criteria state.\",\n  \"inferred_intent\": \"Add a `remove` subcommand to the toy todo CLI (examples/demo) so users can delete an item by id, mirroring the existing `add`/`done`/`list` commands, with matching success/error text, no side effects on failure, and updated usage text and tests.\",\n  \"verdict\": \"PASS\",\n  \"findings\": [\n    {\n      \"severity\": \"minor\",\n      \"description\": \"examples/demo has no dedicated README/usage doc of its own (only inline comments in cli.js and the SEP tool's top-level README, which is unrelated to this app). A user exploring examples/demo for docs on the new `remove` command would only find it via `--help`-style usage text or the source, not a written doc. Not covered by any acceptance criterion and the demo never had a README before this change either, so this is not a regression, just a pre-existing gap a customer might still grumble about.\"\n    }\n  ],\n  \"evidence\": [\n    \"cat SEP-ACCEPTANCE.md\",\n    \"cat SEP-COMMANDS.json\",\n    \"git diff HEAD~1 HEAD --stat\",\n    \"git diff HEAD~1 HEAD (full diff: cli.js, store.js, test/acc_U1.test.js, test/remove.test.js)\",\n    \"cat examples/demo/src/cli.js\",\n    \"cat examples/demo/src/store.js\",\n    \"cd examples/demo && npm test  -> 16/16 tests passed (test/acc_U1.test.js, test/remove.test.js, test/store.test.js)\",\n    \"cd examples/demo && node --test test/acc_U1.test.js  -> 9/9 tests passed (A1..A8.2)\",\n    \"Ran C1: add alpha then remove 1 -> stdout 'removed 1', exit 0\",\n    \"Ran C2: add alpha/beta/gamma, remove 2, list -> '[ ] 1. alpha\\\\n[ ] 3. gamma', exit 0\",\n    \"Ran C3: add alpha, remove 42 -> stdout+stderr 'no item 42', exit non-zero, check passed\",\n    \"Ran C4: add alpha, snapshot list+file, remove 42 (fails), re-check list and file unchanged (cmp -s) -> exit 0\",\n    \"Ran C5: add alpha, done 1, remove 1 -> 'removed 1', subsequent list empty -> exit 0\",\n    \"Ran C6: add/remove/add/done/list sequence + node -e schema check on saved todo.json (items: {id:number,title:string,done:boolean}) -> exit 0\",\n    \"Ran C7: unknown command 'bogus' -> non-zero exit, output matches /todo remove <id>/ -> exit 0\",\n    \"Ran `node src/cli.js` with no args -> prints 'usage: todo add <text> | todo list [--open] | todo done <id> | todo remove <id>', rc=1\",\n    \"Grep for 'remove' across README.md and examples/demo -> only source/tests reference it in the demo app; no demo-specific README exists to update\"\n  ],\n  \"per_acceptance\": [\n    {\"id\": \"A1\", \"result\": \"PASS\", \"note\": \"Verified via C1 and acc_U1.test.js A1: `todo remove 1` prints exactly 'removed 1' and exits 0.\"},\n    {\"id\": \"A2\", \"result\": \"PASS\", \"note\": \"Verified via C2 and acc_U1.test.js A2: after removing id 2 of three items, `todo list` shows only ids 1 and 3, unchanged.\"},\n    {\"id\": \"A3\", \"result\": \"PASS\", \"note\": \"Verified via C3 and acc_U1.test.js A3: removing id 42 (not present) prints 'no item 42' and exits non-zero.\"},\n    {\"id\": \"A4\", \"result\": \"PASS\", \"note\": \"Verified v",
+  "knowledge_statement": "The acceptance list (SEP-ACCEPTANCE.md) says this change adds a `todo remove <id>` command to the demo CLI. On success it must print `removed <id>` and exit 0, and the removed item must disappear from `todo list` while every other item is unchanged (A1, A2). On an unknown id it must print `no item <id>`, exit non-zero, and leave `todo list` and the saved file byte-for-byte untouched (A3, A4). Removing an already-`done` item must work the same way as removing an open item (A5). Existing commands (`add`, `done`, `list`) and the shape of the saved todo.json (an `items` array of `{id:number, title:string, done:boolean}`) must keep working exactly as before (A6). An unknown command's usage/error message must now mention `todo remove <id>` (A7). Finally, `cd examples/demo && npm test` must pass, including tests that remove a known id and that reject an unknown id with `no item <id>` (A8). I know nothing else about why this change exists beyond what these eight criteria state.",
+  "inferred_intent": "Add a `remove` subcommand to the toy todo CLI (examples/demo) so users can delete an item by id, mirroring the existing `add`/`done`/`list` commands, with matching success/error text, no side effects on failure, and updated usage text and tests.",
+  "verdict": "PASS",
+  "findings": [
+    {
+      "severity": "minor",
+      "description": "examples/demo has no dedicated README/usage doc of its own (only inline comments in cli.js and the SEP tool's top-level README, which is unrelated to this app). A user exploring examples/demo for docs on the new `remove` command would only find it via `--help`-style usage text or the source, not a written doc. Not covered by any acceptance criterion and the demo never had a README before this change either, so this is not a regression, just a pre-existing gap a customer might still grumble about.",
+      "claim": "examples/demo has no dedicated README/usage doc of its own (only inline comments in cli.js and the SEP tool's top-level README, which is unrelated to this app). A user exploring examples/demo for docs on the new `remove` command would only find it via `--help`-style usage text or the source, not a written doc. Not covered by any acceptance criterion and the demo never had a README before this change either, so this is not a regression, just a pre-existing gap a customer might still grumble about."
+    }
+  ],
+  "evidence": [
+    {
+      "cmd": "cat SEP-ACCEPTANCE.md",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "cat SEP-COMMANDS.json",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "git diff HEAD~1 HEAD --stat",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "git diff HEAD~1 HEAD (full diff: cli.js, store.js, test/acc_U1.test.js, test/remove.test.js)",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "cat examples/demo/src/cli.js",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "cat examples/demo/src/store.js",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "cd examples/demo && npm test  -> 16/16 tests passed (test/acc_U1.test.js, test/remove.test.js, test/store.test.js)",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "cd examples/demo && node --test test/acc_U1.test.js  -> 9/9 tests passed (A1..A8.2)",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Ran C1: add alpha then remove 1 -> stdout 'removed 1', exit 0",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Ran C2: add alpha/beta/gamma, remove 2, list -> '[ ] 1. alpha\\n[ ] 3. gamma', exit 0",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Ran C3: add alpha, remove 42 -> stdout+stderr 'no item 42', exit non-zero, check passed",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Ran C4: add alpha, snapshot list+file, remove 42 (fails), re-check list and file unchanged (cmp -s) -> exit 0",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Ran C5: add alpha, done 1, remove 1 -> 'removed 1', subsequent list empty -> exit 0",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Ran C6: add/remove/add/done/list sequence + node -e schema check on saved todo.json (items: {id:number,title:string,done:boolean}) -> exit 0",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Ran C7: unknown command 'bogus' -> non-zero exit, output matches /todo remove <id>/ -> exit 0",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Ran `node src/cli.js` with no args -> prints 'usage: todo add <text> | todo list [--open] | todo done <id> | todo remove <id>', rc=1",
+      "exit": 0,
+      "excerpt": ""
+    },
+    {
+      "cmd": "Grep for 'remove' across README.md and examples/demo -> only source/tests reference it in the demo app; no demo-specific README exists to update",
+      "exit": 0,
+      "excerpt": ""
+    }
+  ],
+  "per_acceptance": [
+    {
+      "id": "A1",
+      "result": "PASS",
+      "how": ""
+    },
+    {
+      "id": "A2",
+      "result": "PASS",
+      "how": ""
+    },
+    {
+      "id": "A3",
+      "result": "PASS",
+      "how": ""
+    },
+    {
+      "id": "A4",
+      "result": "PASS",
+      "how": ""
+    },
+    {
+      "id": "A5",
+      "result": "PASS",
+      "how": ""
+    },
+    {
+      "id": "A6",
+      "result": "PASS",
+      "how": ""
+    },
+    {
+      "id": "A7",
+      "result": "PASS",
+      "how": ""
+    },
+    {
+      "id": "A8",
+      "result": "PASS",
+      "how": ""
+    }
+  ],
+  "denials": [
+    "git log --oneline -10 && echo \"---DIFF STAT---\" && git diff HEAD~1 HEAD --stat",
+    "cd /tmp/sep-blind/0e4d841866b7/sandbox && git show HEAD~1:examples/demo/src/cli.js | grep -n \"remove\" ; echo \"---readme mentions---\"; grep -n \"remove\" README.md docs/*.md 2>/dev/null | head -20; echo \"---examples demo readme---\"; find examples/demo -iname \"*.md\" -o -iname \"README*\" | xargs -I{} sh -c 'echo ==={}===; cat {}' 2>/dev/null | grep -n -i remove"
+  ],
+  "leak_check": {
+    "canary_hit": false,
+    "forbidden_reads": [
+      "git log --oneline -10 && echo \"---DIFF STAT---\" && git diff HEAD~1 HEAD --stat",
+      "cd /tmp/sep-blind/0e4d841866b7/sandbox && git show HEAD~1:examples/demo/src/cli.js | grep -n \"remove\" ; echo \"---readme mentions---\"; grep -n \"remove\" README.md docs/*.md 2>/dev/null | head -20; echo \"---examples demo readme---\"; find examples/demo -iname \"*.md\" -o -iname \"README*\" | xargs -I{} sh -c 'echo ==={}===; cat {}' 2>/dev/null | grep -n -i remove"
+    ],
+    "narrative_terms": [],
+    "clean": true
+  },
+  "verdict_weight": 1
+}

@@ -1,0 +1,144 @@
+{
+  "epic": "20260926-add-a-remove-command-to--6ace",
+  "canary": "SEP-CANARY-65823966",
+  "class": "T1",
+  "units": [
+    {
+      "id": "U1",
+      "title": "todo remove <id>: store.remove + cli dispatch + usage line",
+      "goal": "Add `remove(state, id)` to examples/demo/src/store.js (mirrors `complete`: find by Number(id), throw Error(`no item ${id}`) when absent, otherwise splice it out and return the item) and a `remove` case in examples/demo/src/cli.js that calls it BEFORE save() and returns `removed ${item.id}`, plus `todo remove <id>` in both the usage error string and the usage comment at the top of cli.js; add/done/list and the todo.json shape stay untouched.",
+      "zone": "demo",
+      "writes": [
+        "examples/demo/src/store.js",
+        "examples/demo/src/cli.js",
+        "examples/demo/test/remove.test.js"
+      ],
+      "test_writes": [
+        "examples/demo/test/acc_U1.test.js"
+      ],
+      "tests_sha": "7ef7f0d84a2145bd137714e4bd908cb76042816a",
+      "reads": [
+        "examples/demo/src/cli.js",
+        "examples/demo/src/store.js",
+        "examples/demo/test/store.test.js",
+        "examples/demo/test/acc_U1.test.js",
+        "examples/demo/package.json"
+      ],
+      "depends_on": [],
+      "class": "T1",
+      "unknowns": [
+        "`todo remove` with no id at all: default (Q1) is to treat it like an unknown id -> `no item undefined`, non-zero exit, exactly as `todo done` does today (spike confirmed `done` with no id prints `no item undefined`, rc=1); no check pins this",
+        "id reuse after removing the highest id: default (Q2) keeps max+1 allocation, so C6 expects `added 3` after removing 1 from {1,2}",
+        "`removed <id>` echoes the stored numeric id (as `done <id>` does), not the raw argument; checks only use canonical ids so either reading passes",
+        "INFRA (not a code unknown): the executor must be started in a worktree that can `git checkout sep/<epic>/U1`; the prober worktree .claude/worktrees/wf_c0d7a44b-d05-15 still holds that branch (clean, at 7ef7f0d) and must be released from the main checkout before dispatch (see notes REPLAN-1/REPLAN-2)"
+      ],
+      "est_files": 3,
+      "est_lines": 45,
+      "acceptance": ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"],
+      "serialized": [],
+      "checks": [
+        {
+          "id": "C1",
+          "maps_to": "A1",
+          "kind": "check",
+          "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha >/dev/null && out=$(TODO_FILE=$D/t.json node src/cli.js remove 1) && [ \"$out\" = \"removed 1\" ]",
+          "expect": "exit 0",
+          "timeout": 60
+        },
+        {
+          "id": "C2",
+          "maps_to": "A2",
+          "kind": "check",
+          "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js add beta >/dev/null && TODO_FILE=$F node src/cli.js add gamma >/dev/null && TODO_FILE=$F node src/cli.js remove 2 >/dev/null && out=$(TODO_FILE=$F node src/cli.js list) && [ \"$out\" = \"$(printf \"[ ] 1. alpha\\n[ ] 3. gamma\")\" ]",
+          "expect": "exit 0",
+          "timeout": 60
+        },
+        {
+          "id": "C3",
+          "maps_to": "A3",
+          "kind": "check",
+          "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha >/dev/null && { out=$(TODO_FILE=$D/t.json node src/cli.js remove 42 2>&1); rc=$?; [ $rc -ne 0 ] && [ \"$out\" = \"no item 42\" ]; }",
+          "expect": "exit 0",
+          "timeout": 60
+        },
+        {
+          "id": "C4",
+          "maps_to": "A4",
+          "kind": "check",
+          "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && before=$(TODO_FILE=$F node src/cli.js list) && cp $F $D/before.json && { err=$(TODO_FILE=$F node src/cli.js remove 42 2>&1); rc=$?; [ $rc -ne 0 ] && [ \"$err\" = \"no item 42\" ]; } && after=$(TODO_FILE=$F node src/cli.js list) && [ \"$before\" = \"$after\" ] && cmp -s $F $D/before.json",
+          "expect": "exit 0",
+          "timeout": 60
+        },
+        {
+          "id": "C5",
+          "maps_to": "A5",
+          "kind": "check",
+          "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js done 1 >/dev/null && out=$(TODO_FILE=$F node src/cli.js remove 1) && [ \"$out\" = \"removed 1\" ] && [ -z \"$(TODO_FILE=$F node src/cli.js list)\" ]",
+          "expect": "exit 0",
+          "timeout": 60
+        },
+        {
+          "id": "C6",
+          "maps_to": "A6",
+          "kind": "check",
+          "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js add beta >/dev/null && TODO_FILE=$F node src/cli.js remove 1 >/dev/null && [ \"$(TODO_FILE=$F node src/cli.js add gamma)\" = \"added 3\" ] && [ \"$(TODO_FILE=$F node src/cli.js done 2)\" = \"done 2\" ] && [ \"$(TODO_FILE=$F node src/cli.js list)\" = \"$(printf \"[x] 2. beta\\n[ ] 3. gamma\")\" ] && TODO_FILE=$F node -e 'const s=JSON.parse(require(\"fs\").readFileSync(process.env.TODO_FILE,\"utf8\")); if(!Array.isArray(s.items)||s.items.length!==2||!s.items.every(i=>typeof i.id===\"number\"&&typeof i.title===\"string\"&&typeof i.done===\"boolean\")) process.exit(1)'",
+          "expect": "exit 0",
+          "timeout": 60
+        },
+        {
+          "id": "C7",
+          "maps_to": "A7",
+          "kind": "check",
+          "cmd": "cd examples/demo && D=$(mktemp -d) && { out=$(TODO_FILE=$D/t.json node src/cli.js bogus 2>&1); rc=$?; [ $rc -ne 0 ] && printf \"%s\" \"$out\" | grep -q \"todo remove <id>\"; }",
+          "expect": "exit 0",
+          "timeout": 60
+        },
+        {
+          "id": "C8",
+          "maps_to": "A8",
+          "kind": "check",
+          "cmd": "cd examples/demo && node --test test/acc_U1.test.js",
+          "expect": "exit 0",
+          "timeout": 120
+        },
+        {
+          "id": "C9",
+          "maps_to": "A8",
+          "kind": "check",
+          "cmd": "cd examples/demo && npm test",
+          "expect": "exit 0",
+          "timeout": 120
+        }
+      ],
+      "must_not_touch": [
+        "examples/demo/package.json",
+        "examples/demo/test/store.test.js",
+        "examples/demo/test/acc_*",
+        "examples/demo/test/regress_*",
+        ".separator/**",
+        ".claude/**",
+        ".githooks/**",
+        "README.md",
+        "SEPARATOR.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "docs/**"
+      ]
+    }
+  ],
+  "notes": [
+    "REPLAN-1 (why U1 is unchanged in substance). Context: U1 came back with stage=replan, but units/U1/defects/ is empty, spike.json says feasible (5/5 claims supported, red proof exit 1 on both check commands) and notes.md holds only one executor SCOPE-REQUEST: `unit start` failed with `checkout failed: branch already used by worktree wf_c0d7a44b-d05-15`. Verified in the main checkout: the worktree list shows .claude/worktrees/wf_c0d7a44b-d05-15 at 7ef7f0d on sep/20260926-add-a-remove-command-to--6ace/U1, its status is clean, and the branch has exactly one commit above base 474f915 (`U1 change set 1` = examples/demo/test/acc_U1.test.js). sep.cjs `unit start` does `git checkout -q <branch>` (line 350) and git refuses a branch that is checked out in another worktree; the agent guard (sep.cjs line 714) forbids agents from removing or pruning worktrees. Decision: the cut, write-set, checks and goal are correct and stay byte-for-byte; the only edits are (a) `tests_sha` carried into the unit so `plan check` rebuilding card.json keeps the frozen-test baseline 7ef7f0d instead of dropping it, (b) acc_U1.test.js added to `reads` so the executor sees the frozen test it must satisfy, (c) an INFRA unknown naming the blocker. Consequence: nothing produced so far is lost (branch, commit, spike.json, evidence.json all stay) and no second acceptance test is needed. Revisit-when: a defect file appears under units/U1/defects.",
+    "REPLAN-2 (what unblocks U1; outside the planner remit, for the orchestrator or human). From the MAIN checkout, before re-dispatch: release the stale prober worktree with the git worktree removal command on .claude/worktrees/wf_c0d7a44b-d05-15 (safe: the worktree is clean and the branch keeps 7ef7f0d). Then either let `sep next` re-spike U1 (plan check resets the stage to planned; the prober will find acc_U1.test.js already on the branch and only needs to re-run the red proof) or, cheaper, skip the redundant spike with `node .separator/bin/sep.cjs mark 20260926-add-a-remove-command-to--6ace U1 stage=spiked` right after `plan check`, since spike.json and the red proof already exist. Without releasing the worktree, every re-dispatch (prober or executor) fails at the same checkout line.",
+    "REPLAN-3 (systemic, candidate for lessons.md). Context: the harness worktree isolation keeps a worktree whenever it contains changes; every prober and executor commits via `sep unit finish`, so their worktrees always survive and pin the unit branch. The executor's worktree will pin the branch again for the inspector (`git checkout -q sep/<epic>/<u>` in its own worktree) unless the orchestrator releases the previous role's worktree after each role. Decision: not fixable in dag.json; recorded here so the learner can turn it into a lesson (options: sep-run.js releases the finished role worktree after each role, or `unit start` uses a detached checkout of the branch and `unit finish` updates the ref). Revisit-when: sep.cjs unit start/finish change (zone separator, T2 floor).",
+    "FINISHING WITHOUT LOSS (session-limit note). State of the epic right now: acceptance tests written and red (branch sep/<epic>/U1 @ 7ef7f0d, 9 tests, 0 pass), plan feasible, no code yet. Remaining work is the ~30-line implementation of the card in store.js + cli.js (one executor pass), then gate, inspect, blind and merge. If the session limit is hit, resuming with {epic:\"20260926-add-a-remove-command-to--6ace\"} after REPLAN-2 continues from the artifacts; nothing needs to be re-planned or re-probed.",
+    "SHAPE. Context: T1 epic, one zone (demo), two 34-line source files, ~30 lines of change, no schema/lockfile/config. Decision: exactly one unit; no contract unit because todo.json's shape is explicitly unchanged (A6) and nothing else is contract-shaped. Consequence: no wave parallelism, one prober and one executor pass. Revisit-when: a second zone (e.g. docs describing the demo's commands) has to change; today README.md and docs/STATUS.md only name the demo directory, verified by grep.",
+    "WHERE REMOVAL LIVES. Context: cli.js is a switch that delegates all state changes to store.js (add/complete). Decision: removal is `remove(state, id)` in store.js mirroring `complete` (Number(id) lookup, throw Error(`no item ${id}`)); cli.js gets a `remove` case that calls it before save() and returns `removed ${item.id}`. Consequence: the not-found path never reaches save(), which is what makes A4 hold and what C4 verifies byte-for-byte (`cmp -s` of todo.json before/after); store-level unit tests stay possible. Revisit-when: the persona ('simple, no dependencies') changes or the store grows a second backend.",
+    "OUTPUT STREAMS. Context: cli.js prints thrown errors to stderr with exit 1 (how `done <unknown>` reports `no item <id>` today) and results to stdout. Decision: keep that: `removed <id>` on stdout (C1/C5 compare stdout only), `no item <id>` through the existing catch (C3/C4/C7 capture 2>&1 so the stream is not over-specified, but the message text and non-zero exit are). The prober's acceptance test compares stdout+stderr the same way. Revisit-when: a ruling demands the error on stdout.",
+    "ID REUSE. Context: triage Q2 default is to leave add's max+1 allocation alone. Decision: C6 pins that (after removing 1 from {1,2}, `add gamma` prints `added 3`), so an executor who 'helpfully' changes allocation goes red. Revisit-when: a ruling asks for ids that are never reused; then C6's expected `added 3` must change with it.",
+    "WRITE-SET. Context: triage listed examples/demo/test/store.test.js as an est_path, but the zone's test_globs make it frozen (guard-write denies edits, gate flags M/D/R on it) and the executor card says to ADD a new test file instead. Decision: writes are the two source files plus a new, optional examples/demo/test/remove.test.js for store-level unit tests (a new file passes the frozen rule; npm test's `test/*.test.js` glob picks it up, confirmed by the spike with a throwaway probe file). test_writes is examples/demo/test/acc_U1.test.js, now committed at tests_sha 7ef7f0d and frozen for the executor. Consequence: est_files 3 (source 2 + optional test), well inside the T1 lane (8 files / 300 lines).",
+    "CHECKS ARE RED NOW. C1-C7 were dry-run on base 474f915 by the planner (each exits 1 because the CLI answers `remove` with the usage error or `bogus` with a usage line lacking `todo remove <id>`), and C8/C9 by the prober through `sep unit run` (evidence.json: `node --test test/acc_U1.test.js` exit 1, 0/9 pass; `npm test` exit 1, 4/13 pass). Each fails on the missing feature, not on a shell or syntax error. C9 (`npm test`, the zone's declared test command) is kept because A8 is literally 'npm test passes'.",
+    "PROBER GUIDANCE (kept in case of a re-spike). acc_U1.test.js drives the CLI as a black box with node:test + spawnSync(process.execPath, [absolute path of src/cli.js], { env: { ...process.env, TODO_FILE: <tmpdir>/todo.json } }), one test per A1-A7, plus A8.1/A8.2 through a namespace import of store.js so a missing `remove` export fails as an assertion, not a module-link error. cli.js only runs main when import.meta.url === `file://${process.argv[1]}`, so it must be spawned with an absolute ASCII path (spike risk: spaces, % or non-ASCII in the checkout path make the CLI a silent no-op).",
+    "TRIAGE UNKNOWNS. answers.md is absent and rulings.md is empty, so the three triage defaults (Q1 missing id -> `no item undefined` non-zero like `done`; Q2 keep max+1; Q3 done items removable) stand as the unit's unknowns; A5 already encodes Q3 and C6 encodes Q2; Q1 is deliberately unpinned by any check because the request does not define it.",
+    "RULINGS. None recorded; nothing contradicts the request. Lessons file is empty."
+  ]
+}

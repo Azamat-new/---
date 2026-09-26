@@ -1,0 +1,4 @@
+#!/bin/sh
+# regression from finding 9569b605: After removing every item, the next `todo add` reuses id 1 (`add alpha; remove 1; add beta` -> `added 1`), because pre-existing allocation is max(ids)+1 with fallback 1 on an empty list. The card's Q2 default and C6 only pin the partial-removal case ({1,2} minus 1 -> `added 3`); whether ids may ever be reused after a full clear is unspecified by the request. Not a defect of this unit (behaviour is inherited from store.add, untouched), noted so the request owner can rule on it if id stability matters.
+# expect: unspecified by A1-A8 (either `added 1` or `added 2` could be intended)
+cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha && TODO_FILE=$D/t.json node src/cli.js remove 1 && TODO_FILE=$D/t.json node src/cli.js add delta

@@ -1,0 +1,32 @@
+{
+  "epic": "20260926-add-a-remove-command-to--6ace",
+  "unit": "U1",
+  "lens": "customer",
+  "sandbox": "/tmp/sep-blind/0e4d841866b7/sandbox",
+  "base_sha": "474f915e6cbb033f3e5d689464f1133e1a4a1fbc",
+  "head_sha": "2d6b51e7858c977699d30f43ba6cc999748a629e",
+  "stripped": [
+    "CLAUDE.md",
+    "CLAUDE.local.md",
+    "AGENTS.md",
+    ".claude/**",
+    ".separator/**",
+    ".cursor/**",
+    ".github/copilot*",
+    "docs/decisions/**",
+    "CHANGELOG*",
+    "**/PULL_REQUEST_TEMPLATE*",
+    ".env*",
+    "**/secrets/**",
+    ".githooks/**"
+  ],
+  "tree_hash": "0233654442832167faafca1011308082df181fbe55d00f36320c4bd55c3cd20c",
+  "canary_id": "SEP-CANARY-65823966",
+  "leaks": [],
+  "setup": {
+    "cmd": null,
+    "ok": true,
+    "skipped": true
+  },
+  "built": "2026-09-26T13:37:14.292Z"
+}

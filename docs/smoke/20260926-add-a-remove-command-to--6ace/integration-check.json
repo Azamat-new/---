@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "zone": "demo",
+      "test": {
+        "cmd": "cd examples/demo && npm test",
+        "exit": 0,
+        "ok": true,
+        "ms": 1547,
+        "tail": "Subtest: A8.1: store.remove removes a known id and returns the item\nok 8 - A8.1: store.remove removes a known id and returns the item\n  ---\n  duration_ms: 1.683978\n  type: 'test'\n  ...\n# Subtest: A8.2: store.remove rejects an unknown id with `no item <id>`\nok 9 - A8.2: store.remove rejects an unknown id with `no item <id>`\n  ---\n  duration_ms: 0.80432\n  type: 'test'\n  ...\n# Subtest: remove drops the item with that id and returns it\nok 10 - remove drops the item with that id and returns it\n  ---\n  duration_ms: 2.016973\n  type: 'test'\n  ...\n# Subtest: remove of an unknown id throws and leaves the state unchanged\nok 11 - remove of an unknown id throws and leaves the state unchanged\n  ---\n  duration_ms: 0.476592\n  type: 'test'\n  ...\n# Subtest: remove works on a done item\nok 12 - remove works on a done item\n  ---\n  duration_ms: 0.184289\n  type: 'test'\n  ...\n# Subtest: add assigns incrementing ids\nok 13 - add assigns incrementing ids\n  ---\n  duration_ms: 0.785429\n  type: 'test'\n  ...\n# Subtest: add rejects empty title\nok 14 - add rejects empty title\n  ---\n  duration_ms: 0.389105\n  type: 'test'\n  ...\n# Subtest: complete marks done and list --open hides it\nok 15 - complete marks done and list --open hides it\n  ---\n  duration_ms: 1.249917\n  type: 'test'\n  ...\n# Subtest: format renders checkboxes\nok 16 - format renders checkboxes\n  ---\n  duration_ms: 0.150363\n  type: 'test'\n  ...\n1..16\n# tests 16\n# suites 0\n# pass 16\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1353.40286\n"
+      },
+      "invariants": []
+    }
+  ],
+  "at": "2026-09-26T13:39:39.964Z"
+}

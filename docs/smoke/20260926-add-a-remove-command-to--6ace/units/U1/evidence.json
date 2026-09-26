@@ -1,0 +1,126 @@
+{
+  "unit": "U1",
+  "commands": [
+    {
+      "cmd": "cd examples/demo && node --test test/acc_U1.test.js",
+      "exit": 1,
+      "stdout_sha": "ffc7060b5b28d87393a3622d731f750d12552989272f35be16f5caa3b838a733",
+      "ms": 1065,
+      "tail": "ctual - expected\n    \n    + 'undefined'\n    - 'function'\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 'function'\n  actual: 'undefined'\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///home/user/---/.claude/worktrees/wf_c0d7a44b-d05-15/examples/demo/test/acc_U1.test.js:117:10)\n    Test.runInAsyncScope (node:async_hooks:214:14)\n    Test.run (node:internal/test_runner/test:1047:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:744:18)\n    Test.postRun (node:internal/test_runner/test:1173:19)\n    Test.run (node:internal/test_runner/test:1101:12)\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n  ...\n1..9\n# tests 9\n# suites 0\n# pass 0\n# fail 9\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1005.98895\n",
+      "at": "2026-09-26T13:21:17.465Z"
+    },
+    {
+      "cmd": "cd examples/demo && npm test",
+      "exit": 1,
+      "stdout_sha": "a0ffa8091c931095a0deb759317c748b5a5a99f6787440beae1814f844e31659",
+      "ms": 1232,
+      "tail": "l/test_runner/test:1173:19)\n    Test.run (node:internal/test_runner/test:1101:12)\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n  ...\n# Subtest: add assigns incrementing ids\nok 10 - add assigns incrementing ids\n  ---\n  duration_ms: 1.026402\n  type: 'test'\n  ...\n# Subtest: add rejects empty title\nok 11 - add rejects empty title\n  ---\n  duration_ms: 0.587855\n  type: 'test'\n  ...\n# Subtest: complete marks done and list --open hides it\nok 12 - complete marks done and list --open hides it\n  ---\n  duration_ms: 1.774041\n  type: 'test'\n  ...\n# Subtest: format renders checkboxes\nok 13 - format renders checkboxes\n  ---\n  duration_ms: 1.713401\n  type: 'test'\n  ...\n1..13\n# tests 13\n# suites 0\n# pass 4\n# fail 9\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1038.688353\n",
+      "at": "2026-09-26T13:21:18.756Z"
+    },
+    {
+      "cmd": "cd examples/demo && node --test test/acc_U1.test.js",
+      "exit": 1,
+      "stdout_sha": "917f8c1a24e446d8d0bf79d8f2b959e0f89dac315546617a2f41a4169c7596ab",
+      "ms": 1059,
+      "tail": "ctual - expected\n    \n    + 'undefined'\n    - 'function'\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 'function'\n  actual: 'undefined'\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///home/user/---/.claude/worktrees/wf_c0d7a44b-d05-27/examples/demo/test/acc_U1.test.js:117:10)\n    Test.runInAsyncScope (node:async_hooks:214:14)\n    Test.run (node:internal/test_runner/test:1047:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:744:18)\n    Test.postRun (node:internal/test_runner/test:1173:19)\n    Test.run (node:internal/test_runner/test:1101:12)\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n  ...\n1..9\n# tests 9\n# suites 0\n# pass 0\n# fail 9\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 995.309777\n",
+      "at": "2026-09-26T13:30:48.532Z"
+    },
+    {
+      "cmd": "cd examples/demo && npm test",
+      "exit": 1,
+      "stdout_sha": "775d7ccd7527a164fb0d9cbae9f758bbc7febbbe4663181850ba4eff25776156",
+      "ms": 1250,
+      "tail": "nal/test_runner/test:1173:19)\n    Test.run (node:internal/test_runner/test:1101:12)\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n  ...\n# Subtest: add assigns incrementing ids\nok 10 - add assigns incrementing ids\n  ---\n  duration_ms: 0.831833\n  type: 'test'\n  ...\n# Subtest: add rejects empty title\nok 11 - add rejects empty title\n  ---\n  duration_ms: 0.421226\n  type: 'test'\n  ...\n# Subtest: complete marks done and list --open hides it\nok 12 - complete marks done and list --open hides it\n  ---\n  duration_ms: 1.34858\n  type: 'test'\n  ...\n# Subtest: format renders checkboxes\nok 13 - format renders checkboxes\n  ---\n  duration_ms: 1.41943\n  type: 'test'\n  ...\n1..13\n# tests 13\n# suites 0\n# pass 4\n# fail 9\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1036.409455\n",
+      "at": "2026-09-26T13:30:49.953Z"
+    },
+    {
+      "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha >/dev/null && out=$(TODO_FILE=$D/t.json node src/cli.js remove 1) && [ \"$out\" = \"removed 1\" ]",
+      "exit": 0,
+      "stdout_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ms": 96,
+      "tail": "",
+      "at": "2026-09-26T13:34:06.823Z"
+    },
+    {
+      "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js add beta >/dev/null && TODO_FILE=$F node src/cli.js add gamma >/dev/null && TODO_FILE=$F node src/cli.js remove 2 >/dev/null && out=$(TODO_FILE=$F node src/cli.js list) && [ \"$out\" = \"$(printf \"[ ] 1. alpha\\n[ ] 3. gamma\")\" ]",
+      "exit": 0,
+      "stdout_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ms": 225,
+      "tail": "",
+      "at": "2026-09-26T13:34:07.101Z"
+    },
+    {
+      "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha >/dev/null && { out=$(TODO_FILE=$D/t.json node src/cli.js remove 42 2>&1); rc=$?; [ $rc -ne 0 ] && [ \"$out\" = \"no item 42\" ]; }",
+      "exit": 0,
+      "stdout_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ms": 98,
+      "tail": "",
+      "at": "2026-09-26T13:34:07.253Z"
+    },
+    {
+      "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && before=$(TODO_FILE=$F node src/cli.js list) && cp $F $D/before.json && { err=$(TODO_FILE=$F node src/cli.js remove 42 2>&1); rc=$?; [ $rc -ne 0 ] && [ \"$err\" = \"no item 42\" ]; } && after=$(TODO_FILE=$F node src/cli.js list) && [ \"$before\" = \"$after\" ] && cmp -s $F $D/before.json",
+      "exit": 0,
+      "stdout_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ms": 205,
+      "tail": "",
+      "at": "2026-09-26T13:34:07.513Z"
+    },
+    {
+      "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js done 1 >/dev/null && out=$(TODO_FILE=$F node src/cli.js remove 1) && [ \"$out\" = \"removed 1\" ] && [ -z \"$(TODO_FILE=$F node src/cli.js list)\" ]",
+      "exit": 0,
+      "stdout_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ms": 181,
+      "tail": "",
+      "at": "2026-09-26T13:34:07.748Z"
+    },
+    {
+      "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js add beta >/dev/null && TODO_FILE=$F node src/cli.js remove 1 >/dev/null && [ \"$(TODO_FILE=$F node src/cli.js add gamma)\" = \"added 3\" ] && [ \"$(TODO_FILE=$F node src/cli.js done 2)\" = \"done 2\" ] && [ \"$(TODO_FILE=$F node src/cli.js list)\" = \"$(printf \"[x] 2. beta\\n[ ] 3. gamma\")\" ] && TODO_FILE=$F node -e 'const s=JSON.parse(require(\"fs\").readFileSync(process.env.TODO_FILE,\"utf8\")); if(!Array.isArray(s.items)||s.items.length!==2||!s.items.every(i=>typeof i.id===\"number\"&&typeof i.title===\"string\"&&typeof i.done===\"boolean\")) process.exit(1)'",
+      "exit": 0,
+      "stdout_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ms": 355,
+      "tail": "",
+      "at": "2026-09-26T13:34:08.154Z"
+    },
+    {
+      "cmd": "cd examples/demo && D=$(mktemp -d) && { out=$(TODO_FILE=$D/t.json node src/cli.js bogus 2>&1); rc=$?; [ $rc -ne 0 ] && printf \"%s\" \"$out\" | grep -q \"todo remove <id>\"; }",
+      "exit": 0,
+      "stdout_sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ms": 54,
+      "tail": "",
+      "at": "2026-09-26T13:34:08.260Z"
+    },
+    {
+      "cmd": "cd examples/demo && node --test test/acc_U1.test.js",
+      "exit": 0,
+      "stdout_sha": "d9a4dcbb81346ad1809e4b10756fe27e61f5107d22b259bee67231c3a968c77f",
+      "ms": 1366,
+      "tail": "move and the todo.json shape is unchanged\n  ---\n  duration_ms: 320.062529\n  type: 'test'\n  ...\n# Subtest: A7: an unknown command prints a usage line that mentions `todo remove <id>`\nok 7 - A7: an unknown command prints a usage line that mentions `todo remove <id>`\n  ---\n  duration_ms: 49.272338\n  type: 'test'\n  ...\n# Subtest: A8.1: store.remove removes a known id and returns the item\nok 8 - A8.1: store.remove removes a known id and returns the item\n  ---\n  duration_ms: 1.470607\n  type: 'test'\n  ...\n# Subtest: A8.2: store.remove rejects an unknown id with `no item <id>`\nok 9 - A8.2: store.remove rejects an unknown id with `no item <id>`\n  ---\n  duration_ms: 0.756764\n  type: 'test'\n  ...\n1..9\n# tests 9\n# suites 0\n# pass 9\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1308.011503\n",
+      "at": "2026-09-26T13:34:09.680Z"
+    },
+    {
+      "cmd": "cd examples/demo && npm test",
+      "exit": 0,
+      "stdout_sha": "7798c7cc556e027914d038c96e8c361e21c5ac478f33d246691847296795dda1",
+      "ms": 1601,
+      "tail": "tion_ms: 0.794598\n  type: 'test'\n  ...\n# Subtest: remove works on a done item\nok 12 - remove works on a done item\n  ---\n  duration_ms: 0.323354\n  type: 'test'\n  ...\n# Subtest: add assigns incrementing ids\nok 13 - add assigns incrementing ids\n  ---\n  duration_ms: 1.785533\n  type: 'test'\n  ...\n# Subtest: add rejects empty title\nok 14 - add rejects empty title\n  ---\n  duration_ms: 0.60641\n  type: 'test'\n  ...\n# Subtest: complete marks done and list --open hides it\nok 15 - complete marks done and list --open hides it\n  ---\n  duration_ms: 1.498746\n  type: 'test'\n  ...\n# Subtest: format renders checkboxes\nok 16 - format renders checkboxes\n  ---\n  duration_ms: 1.365111\n  type: 'test'\n  ...\n1..16\n# tests 16\n# suites 0\n# pass 16\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1387.448061\n",
+      "at": "2026-09-26T13:34:11.338Z"
+    },
+    {
+      "cmd": "cd examples/demo && npm run lint",
+      "exit": 0,
+      "stdout_sha": "9bba4217a4b200280ead6fb2d27db5bddc2a6362ce4e3afdf81a0ae5fc4f0acb",
+      "ms": 211,
+      "tail": "\n> separator-demo@0.1.0 lint\n> node --check src/cli.js && node --check src/store.js\n\n",
+      "at": "2026-09-26T13:34:11.622Z"
+    }
+  ],
+  "status": "pass",
+  "head_sha": "2d6b51e7858c977699d30f43ba6cc999748a629e",
+  "files_touched": [
+    "examples/demo/src/cli.js",
+    "examples/demo/src/store.js",
+    "examples/demo/test/acc_U1.test.js",
+    "examples/demo/test/remove.test.js"
+  ],
+  "finished": "2026-09-26T13:34:16.369Z"
+}

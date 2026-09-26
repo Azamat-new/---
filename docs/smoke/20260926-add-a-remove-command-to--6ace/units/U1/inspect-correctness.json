@@ -1,0 +1,21 @@
+{
+  "lens": "correctness",
+  "unit": "U1",
+  "verdict": "pass",
+  "findings": [
+    {
+      "claim": "After removing every item, the next `todo add` reuses id 1 (`add alpha; remove 1; add beta` -> `added 1`), because pre-existing allocation is max(ids)+1 with fallback 1 on an empty list. The card's Q2 default and C6 only pin the partial-removal case ({1,2} minus 1 -> `added 3`); whether ids may ever be reused after a full clear is unspecified by the request. Not a defect of this unit (behaviour is inherited from store.add, untouched), noted so the request owner can rule on it if id stability matters.",
+      "severity": "minor",
+      "origin": "request",
+      "file": "examples/demo/src/store.js",
+      "line": 16,
+      "repro": {
+        "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha && TODO_FILE=$D/t.json node src/cli.js remove 1 && TODO_FILE=$D/t.json node src/cli.js add delta",
+        "expect": "unspecified by A1-A8 (either `added 1` or `added 2` could be intended)",
+        "got": "added 1"
+      }
+    }
+  ],
+  "rerun_gate_pass": true,
+  "note": "Checked out sep/20260926-add-a-remove-command-to--6ace/U1 detached at 2d6b51e (branch is held by worktree d05-31). Re-ran in this worktree: `cd examples/demo && npm run lint` rc=0; `cd examples/demo && npm test` rc=0 (16 pass / 0 fail); every contract check C1..C9 executed verbatim via shell -> rc=0 each. Frozen check: `git diff 96b3af7..HEAD -- examples/demo/test/acc_U1.test.js` empty. Scope: only cli.js, store.js, acc_U1.test.js, remove.test.js changed (all in writes/test_writes). Diff review: store.remove mirrors complete (Number(id) lookup, `no item ${id}` throw, splice, returns item); cli.js calls remove before save so a failed remove never writes (C4 + A4 test byte-compare the file); usage string and header comment both updated; add/done/list untouched. Tests are not tautological: exact stdout, exit-status and file-content assertions, A8.x use a namespace import so a missing export fails as an assertion. Edge probes (no id -> `no item undefined` rc=1; `01`/`2.0` coerce and echo canonical id; `abc` -> `no item abc` rc=1; extra args ignored; missing file -> `no item 1` and no file created; double remove -> `no item 4`) all match the existing `done` semantics and the card's Q1/Q3 defaults. No rulings in packet; no conflicts. One minor request-level note about id reuse after emptying the list; nothing blocking."
+}

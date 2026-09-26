@@ -1,0 +1,166 @@
+{
+  "unit": "U1",
+  "epic": "20260926-add-a-remove-command-to--6ace",
+  "head_sha": "2d6b51e7858c977699d30f43ba6cc999748a629e",
+  "base_sha": "474f915e6cbb033f3e5d689464f1133e1a4a1fbc",
+  "pass": true,
+  "checks": {
+    "scope": {
+      "ok": true,
+      "changed": [
+        "examples/demo/src/cli.js",
+        "examples/demo/src/store.js",
+        "examples/demo/test/acc_U1.test.js",
+        "examples/demo/test/remove.test.js"
+      ],
+      "outside": []
+    },
+    "frozen": {
+      "ok": true,
+      "since": "96b3af7d44f93911647326f664d4f0585f79d0b7",
+      "changed": []
+    },
+    "skips": {
+      "ok": true,
+      "lines": []
+    },
+    "secrets": {
+      "ok": true,
+      "lines": []
+    },
+    "setup": {
+      "cmd": null,
+      "skipped": true,
+      "ok": true
+    },
+    "build": {
+      "cmd": null,
+      "skipped": true,
+      "ok": true
+    },
+    "lint": {
+      "cmd": "cd examples/demo && npm run lint",
+      "exit": 0,
+      "ok": true,
+      "ms": 198,
+      "tail": "\n> separator-demo@0.1.0 lint\n> node --check src/cli.js && node --check src/store.js\n\n"
+    },
+    "contract": [
+      {
+        "id": "C1",
+        "maps_to": "A1",
+        "kind": "check",
+        "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha >/dev/null && out=$(TODO_FILE=$D/t.json node src/cli.js remove 1) && [ \"$out\" = \"removed 1\" ]",
+        "exit": 0,
+        "ok": true,
+        "ms": 101,
+        "tail": ""
+      },
+      {
+        "id": "C2",
+        "maps_to": "A2",
+        "kind": "check",
+        "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js add beta >/dev/null && TODO_FILE=$F node src/cli.js add gamma >/dev/null && TODO_FILE=$F node src/cli.js remove 2 >/dev/null && out=$(TODO_FILE=$F node src/cli.js list) && [ \"$out\" = \"$(printf \"[ ] 1. alpha\\n[ ] 3. gamma\")\" ]",
+        "exit": 0,
+        "ok": true,
+        "ms": 245,
+        "tail": ""
+      },
+      {
+        "id": "C3",
+        "maps_to": "A3",
+        "kind": "check",
+        "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha >/dev/null && { out=$(TODO_FILE=$D/t.json node src/cli.js remove 42 2>&1); rc=$?; [ $rc -ne 0 ] && [ \"$out\" = \"no item 42\" ]; }",
+        "exit": 0,
+        "ok": true,
+        "ms": 92,
+        "tail": ""
+      },
+      {
+        "id": "C4",
+        "maps_to": "A4",
+        "kind": "check",
+        "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && before=$(TODO_FILE=$F node src/cli.js list) && cp $F $D/before.json && { err=$(TODO_FILE=$F node src/cli.js remove 42 2>&1); rc=$?; [ $rc -ne 0 ] && [ \"$err\" = \"no item 42\" ]; } && after=$(TODO_FILE=$F node src/cli.js list) && [ \"$before\" = \"$after\" ] && cmp -s $F $D/before.json",
+        "exit": 0,
+        "ok": true,
+        "ms": 207,
+        "tail": ""
+      },
+      {
+        "id": "C5",
+        "maps_to": "A5",
+        "kind": "check",
+        "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js done 1 >/dev/null && out=$(TODO_FILE=$F node src/cli.js remove 1) && [ \"$out\" = \"removed 1\" ] && [ -z \"$(TODO_FILE=$F node src/cli.js list)\" ]",
+        "exit": 0,
+        "ok": true,
+        "ms": 182,
+        "tail": ""
+      },
+      {
+        "id": "C6",
+        "maps_to": "A6",
+        "kind": "check",
+        "cmd": "cd examples/demo && D=$(mktemp -d) && F=$D/t.json && TODO_FILE=$F node src/cli.js add alpha >/dev/null && TODO_FILE=$F node src/cli.js add beta >/dev/null && TODO_FILE=$F node src/cli.js remove 1 >/dev/null && [ \"$(TODO_FILE=$F node src/cli.js add gamma)\" = \"added 3\" ] && [ \"$(TODO_FILE=$F node src/cli.js done 2)\" = \"done 2\" ] && [ \"$(TODO_FILE=$F node src/cli.js list)\" = \"$(printf \"[x] 2. beta\\n[ ] 3. gamma\")\" ] && TODO_FILE=$F node -e 'const s=JSON.parse(require(\"fs\").readFileSync(process.env.TODO_FILE,\"utf8\")); if(!Array.isArray(s.items)||s.items.length!==2||!s.items.every(i=>typeof i.id===\"number\"&&typeof i.title===\"string\"&&typeof i.done===\"boolean\")) process.exit(1)'",
+        "exit": 0,
+        "ok": true,
+        "ms": 302,
+        "tail": ""
+      },
+      {
+        "id": "C7",
+        "maps_to": "A7",
+        "kind": "check",
+        "cmd": "cd examples/demo && D=$(mktemp -d) && { out=$(TODO_FILE=$D/t.json node src/cli.js bogus 2>&1); rc=$?; [ $rc -ne 0 ] && printf \"%s\" \"$out\" | grep -q \"todo remove <id>\"; }",
+        "exit": 0,
+        "ok": true,
+        "ms": 49,
+        "tail": ""
+      },
+      {
+        "id": "C8",
+        "maps_to": "A8",
+        "kind": "check",
+        "cmd": "cd examples/demo && node --test test/acc_U1.test.js",
+        "exit": 0,
+        "ok": true,
+        "ms": 1331,
+        "tail": "known id prints `no item <id>` and exits non-zero\n  ---\n  duration_ms: 96.386616\n  type: 'test'\n  ...\n# Subtest: A4: a failed remove leaves `todo list` and the saved file untouched\nok 4 - A4: a failed remove leaves `todo list` and the saved file untouched\n  ---\n  duration_ms: 195.291175\n  type: 'test'\n  ...\n# Subtest: A5: an item already marked done is removed the same way as an open one\nok 5 - A5: an item already marked done is removed the same way as an open one\n  ---\n  duration_ms: 180.101227\n  type: 'test'\n  ...\n# Subtest: A6: add/done/list keep working on the saved file after a remove and the todo.json shape is unchanged\nok 6 - A6: add/done/list keep working on the saved file after a remove and the todo.json shape is unchanged\n  ---\n  duration_ms: 296.156281\n  type: 'test'\n  ...\n# Subtest: A7: an unknown command prints a usage line that mentions `todo remove <id>`\nok 7 - A7: an unknown command prints a usage line that mentions `todo remove <id>`\n  ---\n  duration_ms: 51.278682\n  type: 'test'\n  ...\n# Subtest: A8.1: store.remove removes a known id and returns the item\nok 8 - A8.1: store.remove removes a known id and returns the item\n  ---\n  duration_ms: 1.747813\n  type: 'test'\n  ...\n# Subtest: A8.2: store.remove rejects an unknown id with `no item <id>`\nok 9 - A8.2: store.remove rejects an unknown id with `no item <id>`\n  ---\n  duration_ms: 0.868784\n  type: 'test'\n  ...\n1..9\n# tests 9\n# suites 0\n# pass 9\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1276.458059\n"
+      },
+      {
+        "id": "C9",
+        "maps_to": "A8",
+        "kind": "check",
+        "cmd": "cd examples/demo && npm test",
+        "exit": 0,
+        "ok": true,
+        "ms": 1569,
+        "tail": "ubtest: A8.1: store.remove removes a known id and returns the item\nok 8 - A8.1: store.remove removes a known id and returns the item\n  ---\n  duration_ms: 1.406332\n  type: 'test'\n  ...\n# Subtest: A8.2: store.remove rejects an unknown id with `no item <id>`\nok 9 - A8.2: store.remove rejects an unknown id with `no item <id>`\n  ---\n  duration_ms: 0.746172\n  type: 'test'\n  ...\n# Subtest: remove drops the item with that id and returns it\nok 10 - remove drops the item with that id and returns it\n  ---\n  duration_ms: 2.324321\n  type: 'test'\n  ...\n# Subtest: remove of an unknown id throws and leaves the state unchanged\nok 11 - remove of an unknown id throws and leaves the state unchanged\n  ---\n  duration_ms: 0.539502\n  type: 'test'\n  ...\n# Subtest: remove works on a done item\nok 12 - remove works on a done item\n  ---\n  duration_ms: 0.264152\n  type: 'test'\n  ...\n# Subtest: add assigns incrementing ids\nok 13 - add assigns incrementing ids\n  ---\n  duration_ms: 0.924013\n  type: 'test'\n  ...\n# Subtest: add rejects empty title\nok 14 - add rejects empty title\n  ---\n  duration_ms: 0.430116\n  type: 'test'\n  ...\n# Subtest: complete marks done and list --open hides it\nok 15 - complete marks done and list --open hides it\n  ---\n  duration_ms: 1.307957\n  type: 'test'\n  ...\n# Subtest: format renders checkboxes\nok 16 - format renders checkboxes\n  ---\n  duration_ms: 0.17141\n  type: 'test'\n  ...\n1..16\n# tests 16\n# suites 0\n# pass 16\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1362.340939\n"
+      }
+    ],
+    "tests": {
+      "cmd": "cd examples/demo && npm test",
+      "exit": 0,
+      "ok": true,
+      "ms": 1588,
+      "tail": "Subtest: A8.1: store.remove removes a known id and returns the item\nok 8 - A8.1: store.remove removes a known id and returns the item\n  ---\n  duration_ms: 2.654731\n  type: 'test'\n  ...\n# Subtest: A8.2: store.remove rejects an unknown id with `no item <id>`\nok 9 - A8.2: store.remove rejects an unknown id with `no item <id>`\n  ---\n  duration_ms: 1.096684\n  type: 'test'\n  ...\n# Subtest: remove drops the item with that id and returns it\nok 10 - remove drops the item with that id and returns it\n  ---\n  duration_ms: 1.919484\n  type: 'test'\n  ...\n# Subtest: remove of an unknown id throws and leaves the state unchanged\nok 11 - remove of an unknown id throws and leaves the state unchanged\n  ---\n  duration_ms: 0.51441\n  type: 'test'\n  ...\n# Subtest: remove works on a done item\nok 12 - remove works on a done item\n  ---\n  duration_ms: 0.18099\n  type: 'test'\n  ...\n# Subtest: add assigns incrementing ids\nok 13 - add assigns incrementing ids\n  ---\n  duration_ms: 0.755558\n  type: 'test'\n  ...\n# Subtest: add rejects empty title\nok 14 - add rejects empty title\n  ---\n  duration_ms: 0.342946\n  type: 'test'\n  ...\n# Subtest: complete marks done and list --open hides it\nok 15 - complete marks done and list --open hides it\n  ---\n  duration_ms: 2.542265\n  type: 'test'\n  ...\n# Subtest: format renders checkboxes\nok 16 - format renders checkboxes\n  ---\n  duration_ms: 0.167982\n  type: 'test'\n  ...\n1..16\n# tests 16\n# suites 0\n# pass 16\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1405.544523\n"
+    },
+    "mutants": {
+      "applied": 2,
+      "killed": 2,
+      "survivors": [],
+      "skipped": false
+    }
+  },
+  "at": "2026-09-26T13:34:37.274Z",
+  "class_predicted": "T1",
+  "class_actual": "T1",
+  "promoted": false,
+  "diff": {
+    "files": 4,
+    "insertions": 162,
+    "deletions": 3
+  },
+  "diff_sha256": "14e92edae6fc195877c5d6e122d34866a359f9e08bbec0efa7122aaa3bacf9ab",
+  "failed": [],
+  "ms": 8709
+}

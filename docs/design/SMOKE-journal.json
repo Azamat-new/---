@@ -1,0 +1,417 @@
+[
+ {
+  "value": {
+   "json": "{\"epic\": \"20260926-add-a-remove-command-to--6ace\", \"dir\": \"/home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace\", \"base_sha\": \"474f915e6cbb033f3e5d689464f1133e1a4a1fbc\"}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"step\": \"triage\",\n  \"class\": null,\n  \"stage\": \"intake\",\n  \"request\": \"Add a `remove` command to the demo todo CLI (examples/demo) so a user can delete an item by id: `todo remove <id>` prints `removed <id>` and the item no longer appears in `todo list`; for an unknown id it must exit non-zero with the message `no item <id>`.\",\n  \"has_zones\": true\n}"
+  }
+ },
+ {
+  "value": {
+   "acceptance": [
+    "Running `todo remove <id>` with an existing id prints exactly `removed <id>` and exits zero.",
+    "After `todo remove <id>` succeeds, that item no longer appears in the output of `todo list`.",
+    "Running `todo remove <id>` with an unknown id prints the message `no item <id>`.",
+    "For an unknown id, `todo remove <id>` exits with a non-zero status.",
+    "The `remove` command lives in the demo todo CLI under examples/demo, alongside the existing commands.",
+    "Existing commands (e.g. `todo list`) keep working as before after the change."
+   ]
+  }
+ },
+ {
+  "value": {
+   "class": "T1",
+   "acceptance": [
+    {
+     "id": "A1",
+     "text": "WHEN the user runs `todo remove <id>` and an item with that id exists THE SYSTEM SHALL print `removed <id>` on stdout and exit with status 0."
+    },
+    {
+     "id": "A2",
+     "text": "WHEN the user runs `todo list` after a successful `todo remove <id>` THE SYSTEM SHALL show no line for that id while every other item still appears exactly as before."
+    },
+    {
+     "id": "A3",
+     "text": "WHEN the user runs `todo remove <id>` and no item with that id exists THE SYSTEM SHALL print `no item <id>` and exit with a non-zero status."
+    },
+    {
+     "id": "A4",
+     "text": "WHEN `todo remove <id>` fails with `no item <id>` THE SYSTEM SHALL leave the output of `todo list` identical to what it was before the attempt."
+    },
+    {
+     "id": "A5",
+     "text": "WHEN the user runs `todo remove <id>` for an item already marked done THE SYSTEM SHALL remove it the same way as an open item."
+    },
+    {
+     "id": "A6",
+     "text": "WHEN the user runs `todo add`, `todo done` or `todo list` after a `todo remove` THE SYSTEM SHALL keep working on the saved file exactly as before."
+    },
+    {
+     "id": "A7",
+     "text": "WHEN the user runs `todo` with an unknown command THE SYSTEM SHALL print a usage line that mentions `todo remove <id>`."
+    },
+    {
+     "id": "A8",
+     "text": "(internal) WHEN `cd examples/demo && npm test` runs THE SYSTEM SHALL pass, including a test that removes a known id and one that rejects an unknown id with `no item <id>`."
+    }
+   ],
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "What should `todo remove` do when no id is given at all?",
+     "default": "Mirror the existing `todo done`: any id that matches no item, including a missing one, is reported as `no item <id>` with a non-zero exit.",
+     "why": "Only affects an edge case outside the request; the default is consistent with current behaviour and needs no new rule."
+    },
+    {
+     "id": "Q2",
+     "text": "After removing the item with the highest id, may `todo add` reuse that id?",
+     "default": "Keep the current id assignment unchanged (max+1), so reuse is possible; ids are not promised to be unique over time.",
+     "why": "Changing id allocation would touch add and the file format; nothing in the request asks for it."
+    },
+    {
+     "id": "Q3",
+     "text": "Should removing an item that is already done be allowed?",
+     "default": "Yes: any existing id can be removed, done or open.",
+     "why": "The request says 'delete an item by id' without restriction; refusing would need a second error message it does not define."
+    }
+   ],
+   "est_paths": [
+    "examples/demo/src/cli.js",
+    "examples/demo/src/store.js",
+    "examples/demo/test/store.test.js"
+   ],
+   "files_written": [
+    "/home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/ACCEPTANCE.md",
+    "/home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/triage.json"
+   ]
+  }
+ },
+ {
+  "value": {
+   "mismatch": false,
+   "missing": [],
+   "extra": [
+    "A4: failed remove leaves `todo list` output unchanged",
+    "A5: removing a done item works the same as an open item",
+    "A7: usage line for unknown command mentions `todo remove <id>`",
+    "A8: npm test in examples/demo passes with remove tests (internal)"
+   ],
+   "note": "All user-visible outcomes in the independent reading are covered by triage A1, A2, A3, A6; the examples/demo location constraint is implied by A8 and is not user-visible. Triage is a strict superset. Result written to /home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/intent-check.json"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"class\": \"T1\",\n  \"floor\": \"T1\",\n  \"signals\": [\n    \"unknowns\"\n  ],\n  \"unmapped\": [],\n  \"lane\": {\n    \"max_files\": 8,\n    \"max_lines\": 300,\n    \"sendbacks_execute\": 2,\n    \"calls\": 12,\n    \"effort\": \"medium\",\n    \"blind_lenses\": [\n      \"customer\"\n    ],\n    \"inspect_lenses\": [\n      \"correctness\"\n    ]\n  }\n}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"step\": \"plan\",\n  \"class\": \"T1\",\n  \"stage\": \"classified\",\n  \"lane\": {\n    \"max_files\": 8,\n    \"max_lines\": 300,\n    \"sendbacks_execute\": 2,\n    \"calls\": 12,\n    \"effort\": \"medium\",\n    \"blind_lenses\": [\n      \"customer\"\n    ],\n    \"inspect_lenses\": [\n      \"correctness\"\n    ]\n  },\n  \"retry\": null\n}"
+  }
+ },
+ {
+  "value": {
+   "units": [
+    {
+     "id": "U1",
+     "title": "todo remove <id>: store.remove + cli dispatch + usage line",
+     "zone": "demo",
+     "writes": [
+      "examples/demo/src/store.js",
+      "examples/demo/src/cli.js",
+      "examples/demo/test/remove.test.js"
+     ],
+     "acceptance": [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8"
+     ]
+    }
+   ],
+   "notes": "Written: /home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/dag.json (canary SEP-CANARY-65823966 included under \"canary\"). Nothing else was modified; no code or tests written.\n\nPlan: exactly one unit U1 in zone demo, class T1. The two source files (store.js, cli.js) are one change; every user-visible criterion is only provable through the CLI, there is no contract-shaped work (todo.json shape explicitly unchanged, A6), and no other zone is affected (README.md / docs/STATUS.md only name the demo directory — verified by grep). est_files 3, est_lines 45, well inside the T1 lane (8/300). test_writes = examples/demo/test/acc_U1.test.js (matches npm test glob test/*.test.js and the frozen **/acc_* glob; follows the convention in docs/STATUS.md). writes includes an optional new examples/demo/test/remove.test.js so the executor can add store-level unit tests without touching the frozen store.test.js (triage's est_path store.test.js is frozen by the zone's test_globs and cannot be edited).\n\nChecks: nine real commands, one per acceptance id (A8 has two). C1–C7 are POSIX-sh black-box checks against `node src/cli.js` with TODO_FILE in a mktemp dir (C4 compares `todo list` output and the todo.json bytes before/after a failed remove; C6 pins add/done/list + JSON shape after a remove, including the Q2 default `added 3`). C8 = `node --test test/acc_U1.test.js`, C9 = `npm test`. Dry-run on base 474f915: C1–C8 exit 1 for the right reason (usage error / missing acceptance test), C9 is green on base by construction and turns red once the prober lands acc_U1.test.js. A read-only replica of the `sep plan check` rules reports no errors and full A1–A8 coverage. I did not run `sep plan check` itself because it mutates state.json/schedule.json — that is the orchestrator's next step.\n\nADR-lite decisions are in dag.json \"notes\": removal lives in store.remove mirroring complete() and is called before save() (that is what makes A4 hold); `removed <id>` on stdout, `no item <id>` via the existing catch (checks capture 2>&1 so the stream is not over-specified); id allocation stays max+1 (C6 pins it); prober should spawn cli.js with an absolute path rather than import `remove` (a module-load failure is not a clean red proof). Triage unknowns Q1–Q3 carried as unit unknowns with their defaults; rulings.md and lessons.md are empty, no contradictions.\n\nRe the relayed user concern about hitting the context limit: no work lives only in this conversation. dag.json is the complete, validated artifact on disk; the funnel resumes from artifacts. Next resumable command: `node .separator/bin/sep.cjs plan check 20260926-add-a-remove-command-to--6ace` (writes schedule.json and units/U1/card.json), or `/sep-run {epic:\"20260926-add-a-remove-command-to--6ace\"}` to continue from the current stage."
+  }
+ },
+ {
+  "value": {
+   "json": "{\"ok\": true, \"errors\": [], \"waves\": [[\"U1\"]], \"missing_acceptance\": []}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"step\": \"spike\",\n  \"class\": \"T1\",\n  \"stage\": \"planned\",\n  \"units\": [\n    \"U1\"\n  ]\n}"
+  }
+ },
+ {
+  "value": {
+   "verdict": "feasible",
+   "hypotheses": [
+    {
+     "claim": "The feature is genuinely missing on the base: examples/demo/src/store.js exports no `remove` and examples/demo/src/cli.js has no `remove` case, so an acceptance test is red for the right reason (missing feature), not a syntax/import error.",
+     "result": "supported",
+     "how": "Read store.js (exports only load/save/add/complete/list/format) and cli.js (switch has add/done/list + default usage throw). Ran `TODO_FILE=$D/t.json node src/cli.js add alpha` then `... remove 1`: stderr `usage: todo add <text> | todo list [--open] | todo done <id>`, rc=1, t.json unchanged. Red proof shows A8.1/A8.2 fail on `typeof store.remove` === 'undefined' and A1..A7 fail with ERR_ASSERTION; `node --check` on the test passes."
+    },
+    {
+     "claim": "The zone test command `npm test` (= `node --test test/*.test.js`, per examples/demo/package.json) discovers a newly added examples/demo/test/acc_U1.test.js.",
+     "result": "supported",
+     "how": "Dropped a throwaway examples/demo/test/zz_probe.test.js and ran `npm test`: it reported 5 tests including `zz probe` (probe deleted in the same command; `ls test/` confirmed only store.test.js remained). The C9 red proof then showed 13 tests: 4 existing store.test.js pass + 9 acc_U1 fail."
+    },
+    {
+     "claim": "The error path the card tells the executor to mirror (`complete` throws Error(`no item ${id}`); cli.js writes e.message to stderr and exits 1) behaves as assumed, including `no item undefined` for a missing id (the card's Q1 default).",
+     "result": "supported",
+     "how": "Ran `todo done 42` -> stderr `no item 42`, rc=1; `todo done` (no id) -> stderr `no item undefined`, rc=1; `todo bogus` -> usage line today does NOT contain `todo remove <id>`, rc=1 (so C7/A7 is red now too)."
+    },
+    {
+     "claim": "Id allocation is max(existing ids)+1 so C6's `added 3` after removing id 1 from {1,2} holds, and removing the last item makes `todo list` print nothing (C5 checks `-z`).",
+     "result": "supported",
+     "how": "Read store.js line 16 (`Math.max(...state.items.map(i => i.id)) + 1`, else 1) and cli.js line 33 (`if (out) process.stdout.write(...)`, so format([]) === '' prints nothing). Runtime confirmation of the post-remove path is impossible until remove exists; the code is unambiguous."
+    },
+    {
+     "claim": "`sep unit run` executes the card's check commands verbatim through a shell (so `cd examples/demo && ...` works), and `sep unit finish --status pass` is accepted and commits only the test with a neutral message.",
+     "result": "supported",
+     "how": "Read .separator/bin/sep.cjs line 24 (`cp.spawnSync(cmd, { shell: true, ... })`) and line 381 (`ev.status = opt.status || 'pass'`). Both red-proof runs printed `[sep] recorded: exit=1`; finish returned head_sha 7ef7f0d84a2145bd137714e4bd908cb76042816a, files_touched = [examples/demo/test/acc_U1.test.js], commands_recorded = 2; `git log` shows `U1 change set 1`; worktree clean afterwards."
+    }
+   ],
+   "red_proof": {
+    "cmd": "node .separator/bin/sep.cjs unit run 20260926-add-a-remove-command-to--6ace U1 -- \"cd examples/demo && node --test test/acc_U1.test.js\"   (9 tests, 0 pass, 9 fail, all ERR_ASSERTION on the missing feature). Also recorded: node .separator/bin/sep.cjs unit run 20260926-add-a-remove-command-to--6ace U1 -- \"cd examples/demo && npm test\"  (13 tests, 4 pass [store.test.js], 9 fail [acc_U1], exit 1)",
+    "exit": 1
+   },
+   "tests_written": [
+    "/home/user/---/.claude/worktrees/wf_c0d7a44b-d05-15/examples/demo/test/acc_U1.test.js  (committed as 7ef7f0d84a2145bd137714e4bd908cb76042816a on sep/20260926-add-a-remove-command-to--6ace/U1; 9 tests: A1, A2, A3, A4, A5, A6, A7 spawn the real CLI via child_process.spawnSync with a per-test TODO_FILE and assert stdout/stderr/exit status; A8.1 and A8.2 exercise store.remove directly through a namespace import so a missing export fails as a clean assertion instead of a module-link error)"
+   ],
+   "risks": [
+    "A3/A4 say the CLI must 'print `no item <id>`' without naming the stream; the mirrored `done` path prints to stderr. The acceptance tests (like the card's C3/C4, which use `2>&1`) compare stdout+stderr combined, so either stream passes; an executor must still keep the message exact (`no item 42`, nothing else) and the exit non-zero.",
+    "cli.js's main guard `import.meta.url === \\`file://${process.argv[1]}\\`` is pre-existing and path-sensitive (no percent-encoding). It works at this worktree path and the main checkout path, but a checkout path containing spaces, `%` or non-ASCII would make the CLI a silent no-op (exit 0, no output) and every CLI-level acceptance test would fail confusingly. Not a U1 change, but the gate/sandbox should run from an ASCII path.",
+    "The suite grew from ~0.09 s to ~1.1 s because A1..A7 spawn ~30 node processes; the zone declares suite_seconds: 2, so it still fits but with less headroom.",
+    "A8's acceptance text asks for 'a test that removes a known id and one that rejects an unknown id'; A8.1/A8.2 cover this at the acceptance level via store.remove(state, id) returning the removed item and throwing exactly `Error: no item 42` without mutating state. The executor's own examples/demo/test/remove.test.js (in the card's writes) is still expected by the card but is not required for the acceptance tests to pass.",
+    "The epic directory (.separator/epics/<epic>/) does not exist inside this worktree; the CLI resolves it through `git rev-parse --git-common-dir` to the main checkout, so evidence.json, state.json, card.json (tests_sha) and notes.md were written there. That is by design, but anyone inspecting the worktree alone will not see them.",
+    "The must_not_touch list includes `examples/demo/test/acc_*`; after this finish the file is frozen for the executor (guard-write allowed the prober's write, as the hook design intends)."
+   ]
+  }
+ },
+ {
+  "value": {
+   "json": "{\"ok\": true, \"set\": {\"stage\": \"spiked\", \"spike_verdict\": \"feasible\"}}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"step\": \"units\",\n  \"class\": \"T1\",\n  \"stage\": \"building\",\n  \"units\": [\n    {\n      \"id\": \"U1\",\n      \"stage\": \"spiked\",\n      \"round\": 0,\n      \"class\": \"T1\",\n      \"acceptance\": [\n        \"A1\",\n        \"A2\",\n        \"A3\",\n        \"A4\",\n        \"A5\",\n        \"A6\",\n        \"A7\",\n        \"A8\"\n      ],\n      \"title\": \"todo remove <id>: store.remove + cli dispatch + usage line\"\n    }\n  ],\n  \"lane\": {\n    \"max_files\": 8,\n    \"max_lines\": 300,\n    \"sendbacks_execute\": 2,\n    \"calls\": 12,\n    \"effort\": \"medium\",\n    \"blind_lenses\": [\n      \"customer\"\n    ],\n    \"inspect_lenses\": [\n      \"correctness\"\n    ]\n  }\n}"
+  }
+ },
+ {
+  "value": {
+   "status": "blocked",
+   "head_sha": "7ef7f0d84a2145bd137714e4bd908cb76042816a",
+   "summary": "U1 not started: the unit branch sep/20260926-add-a-remove-command-to--6ace/U1 is still checked out by the prober's stale worktree /home/user/---/.claude/worktrees/wf_c0d7a44b-d05-15 (clean, at 7ef7f0d), so `sep unit start` refuses the checkout; the executor guard forbids releasing that worktree. Nothing was written or committed in this worktree; a SCOPE-REQUEST note was recorded on U1. Work is preserved: acceptance tests are committed on the unit branch at 7ef7f0d, the packet/spike/notes live in the epic ledger, and the remaining implementation is ~20 lines once the branch is freed and U1 is re-dispatched.",
+   "files_touched": [],
+   "blocked_reason": "Branch sep/20260926-add-a-remove-command-to--6ace/U1 is held by another worktree (wf_c0d7a44b-d05-15); `sep unit start` fails and the guard denies the executor any worktree removal/prune. Release that worktree from the main checkout (it is clean) and re-run U1."
+  }
+ },
+ {
+  "value": {
+   "json": "{\"ok\": true, \"set\": {\"stage\": \"replan\"}}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\"epic\": \"20260926-add-a-remove-command-to--6ace\", \"step\": \"replan\", \"class\": \"T1\", \"stage\": \"building\", \"units\": [\"U1\"]}"
+  }
+ },
+ {
+  "value": {
+   "units": [
+    {
+     "id": "U1",
+     "title": "todo remove <id>: store.remove + cli dispatch + usage line",
+     "zone": "demo",
+     "writes": [
+      "examples/demo/src/store.js",
+      "examples/demo/src/cli.js",
+      "examples/demo/test/remove.test.js"
+     ],
+     "acceptance": [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8"
+     ]
+    }
+   ],
+   "notes": "REPLAN RESULT — U1 is unchanged in substance; the sendback was infrastructural, not a plan defect. Evidence: units/U1/defects/ is empty; spike.json = feasible (5/5 claims supported; red proof `node --test test/acc_U1.test.js` exit 1, 0/9 pass; `npm test` exit 1, 4/13 pass); notes.md holds only the executor's SCOPE-REQUEST: `unit start` failed with \"checkout failed: branch already used by worktree wf_c0d7a44b-d05-15\". Verified in the main checkout: `git worktree list` shows /home/user/---/.claude/worktrees/wf_c0d7a44b-d05-15 at 7ef7f0d on sep/20260926-add-a-remove-command-to--6ace/U1, that worktree is clean, and the branch carries exactly one commit above base 474f915 (\"U1 change set 1\" = examples/demo/test/acc_U1.test.js). /home/user/---/.separator/bin/sep.cjs line 350 does `git checkout -q <branch>`, which git refuses while another worktree holds the branch; line 714 forbids agents from removing/pruning worktrees, so neither executor nor planner can clear it.\n\nChanges made to /home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/dag.json (only U1, as instructed): (a) added \"tests_sha\": \"7ef7f0d84a2145bd137714e4bd908cb76042816a\" to the unit so that `plan check` (which rebuilds card.json via Object.assign from the dag unit) keeps the frozen-test baseline instead of dropping it; (b) added examples/demo/test/acc_U1.test.js to `reads`; (c) added an INFRA unknown; (d) notes REPLAN-1..3 and FINISHING WITHOUT LOSS. Goal, writes, test_writes, checks C1–C9, must_not_touch, est_files 3 / est_lines 45, canary SEP-CANARY-65823966 are byte-for-byte as before. No code or tests were written.\n\nANSWER TO THE USER (Мы достигли результата? / как завершить без потери работы): Result NOT yet reached — the feature is not implemented, but nothing is lost. What exists and survives: the plan (dag.json, schedule.json), the feasible spike (spike.json), the red acceptance test committed on branch sep/20260926-add-a-remove-command-to--6ace/U1 @ 7ef7f0d (9 tests, all failing for the right reason), evidence.json, and the card with tests_sha. Remaining work is ~30 lines (store.remove mirroring complete + a `remove` case in cli.js before save + the usage strings), then gate/inspect/blind/merge — all resumable from artifacts with {epic:\"20260926-add-a-remove-command-to--6ace\"}.\n\nUNBLOCK STEPS (must be done by the orchestrator or the human from the MAIN checkout /home/user/---, since agents may not do it): 1) remove the stale prober worktree .claude/worktrees/wf_c0d7a44b-d05-15 with git's worktree-remove subcommand (safe: clean worktree; the branch keeps 7ef7f0d). 2) `node .separator/bin/sep.cjs plan check 20260926-add-a-remove-command-to--6ace` (resets U1 to planned). 3) Optional but cheaper: `node .separator/bin/sep.cjs mark 20260926-add-a-remove-command-to--6ace U1 stage=spiked` to skip the redundant re-spike (spike.json and the red proof already exist); otherwise `sep next` will re-spike, and the prober will find acc_U1.test.js already on the branch. 4) Re-run the sep-run workflow with {epic:\"20260926-add-a-remove-command-to--6ace\"}. Systemic warning for lessons.md: the harness keeps every worktree that contains commits, and every prober/executor commits via `sep unit finish`, so the executor's worktree will pin the branch again before the inspector's `git checkout -q sep/<epic>/<u>`; release the previous role's worktree after each role (or change `unit start` to a detached checkout) or this sendback loop repeats. Rulings: none; lessons: empty; nothing contradicts the request."
+  }
+ },
+ {
+  "value": {
+   "json": "{\"ok\": true, \"errors\": [], \"waves\": [[\"U1\"]], \"missing_acceptance\": []}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\"epic\":\"20260926-add-a-remove-command-to--6ace\",\"step\":\"spike\",\"class\":\"T1\",\"stage\":\"planned\",\"units\":[\"U1\"]}"
+  }
+ },
+ {
+  "value": {
+   "verdict": "feasible",
+   "hypotheses": [
+    {
+     "claim": "The feature is genuinely missing on the base: examples/demo/src/store.js exports no `remove` and examples/demo/src/cli.js has no `remove` case, so the acceptance test is red for the right reason (missing feature), not a syntax/import error.",
+     "result": "supported",
+     "how": "grep '^export' store.js -> load/save/add/complete/list/format only; grep cli.js switch -> add/done/list + default usage throw. Runtime: `TODO_FILE=$D/t.json node src/cli.js add alpha` then `remove 1` -> stderr `usage: todo add <text> | todo list [--open] | todo done <id>`, rc=1, t.json unchanged. `node --check test/acc_U1.test.js` passes; red proof shows all 9 failures as ERR_ASSERTION, none SyntaxError/ERR_MODULE."
+    },
+    {
+     "claim": "The zone test command `npm test` (= `node --test test/*.test.js` per examples/demo/package.json) discovers a newly added examples/demo/test/acc_U1.test.js.",
+     "result": "supported",
+     "how": "Dropped a throwaway examples/demo/test/zz_probe.test.js and ran `npm test`: output listed `ok 14 - zz probe`, `# tests 14`; probe deleted in the same command (ls test/ shows only acc_U1.test.js and store.test.js). Recorded C9 run shows 13 tests = 4 store.test.js pass + 9 acc_U1 fail."
+    },
+    {
+     "claim": "The error path the card tells the executor to mirror (`complete` throws Error(`no item ${id}`); cli.js writes e.message to stderr and exits 1) behaves as assumed, including `no item undefined` for a missing id (card's Q1 default), and today's usage line does not mention `todo remove <id>` (so A7 is red now).",
+     "result": "supported",
+     "how": "Ran `todo done 42` -> `no item 42` rc=1; `todo done` (no id) -> `no item undefined` rc=1; `todo bogus` -> usage line without `todo remove <id>`, rc=1. Read cli.js main guard: `process.stderr.write(e.message + '\\n'); process.exit(1)`."
+    },
+    {
+     "claim": "Id allocation is max(existing ids)+1 so C6's `added 3` after removing id 1 from {1,2} holds, and removing the last item makes `todo list` print nothing (C5 checks -z).",
+     "result": "supported",
+     "how": "Read store.js:16 `Math.max(...state.items.map(i => i.id)) + 1` (else 1) and cli.js:33 `if (out) process.stdout.write(out + '\\n')`, so format([]) === '' prints nothing. Post-remove runtime path cannot be executed until remove exists; the code is unambiguous."
+    },
+    {
+     "claim": "`sep unit run` executes the check command verbatim through a shell (so `cd examples/demo && ...` works) and `sep unit finish --status pass` is accepted and commits only the test with a neutral message.",
+     "result": "supported",
+     "how": "grep .separator/bin/sep.cjs: line 24 `cp.spawnSync(cmd, { shell: true, ... })`, line 381 `ev.status = opt.status || 'pass'`. Both unit run calls printed `[sep] recorded: exit=1`; finish returned head_sha 96b3af7d, files_touched=[examples/demo/test/acc_U1.test.js], commands_recorded=4; `git diff --name-only 474f915..HEAD` = exactly examples/demo/test/acc_U1.test.js; commit subjects `U1 change set 1`/`U1 change set 2`; worktree clean."
+    }
+   ],
+   "red_proof": {
+    "cmd": "node .separator/bin/sep.cjs unit run 20260926-add-a-remove-command-to--6ace U1 -- \"cd examples/demo && node --test test/acc_U1.test.js\"  (9 tests, 0 pass, 9 fail, all code ERR_ASSERTION on the missing feature). Also recorded: node .separator/bin/sep.cjs unit run 20260926-add-a-remove-command-to--6ace U1 -- \"cd examples/demo && npm test\"  (13 tests, 4 pass [store.test.js], 9 fail [acc_U1], exit 1)",
+    "exit": 1
+   },
+   "tests_written": [
+    "/home/user/---/.claude/worktrees/wf_c0d7a44b-d05-27/examples/demo/test/acc_U1.test.js  (already committed by the previous prober run as 7ef7f0d84a2145bd137714e4bd908cb76042816a on sep/20260926-add-a-remove-command-to--6ace/U1; verified intact and unchanged in this run, HEAD now 96b3af7d44f93911647326f664d4f0585f79d0b7 after an empty finish commit; 9 tests: A1..A7 spawn the real CLI via child_process.spawnSync with a per-test TODO_FILE and assert stdout/stderr/exit status; A8.1/A8.2 exercise store.remove through a namespace import so a missing export fails as a clean assertion, not a module-link error)"
+   ],
+   "risks": [
+    "No new work was needed: the previous prober (worktree wf_c0d7a44b-d05-15) had already written and committed the tests; this run only re-verified the claims, re-recorded both red proofs through `sep unit run`, and finished. `unit finish` on a clean tree created an EMPTY commit `U1 change set 2` (96b3af7); harmless, but the executor's first commit will be `change set 3`.",
+    "INFRA (same as the card's unknown #4): this worktree (.claude/worktrees/wf_c0d7a44b-d05-27) now holds the unit branch sep/20260926-add-a-remove-command-to--6ace/U1. The harness released d05-15 automatically on `unit start` (`released: ok: true`), so the same auto-release should work for the executor dispatch; if it does not, release d05-27 from the main checkout before dispatching U1 to the executor.",
+    "A3/A4 say 'print `no item <id>`' without naming the stream; the mirrored `done` path prints to stderr. The acceptance tests (like the card's C3/C4 with `2>&1`) compare stdout+stderr combined, so either stream passes; the executor must keep the message exact (`no item 42`, nothing else) and the exit non-zero.",
+    "cli.js's main guard `import.meta.url === \\`file://${process.argv[1]}\\`` is pre-existing and path-sensitive (no percent-encoding). Works at this worktree path and the main checkout path; a checkout path with spaces, `%` or non-ASCII would make the CLI a silent no-op and every CLI-level acceptance test would fail confusingly. Gate/sandbox should run from an ASCII path.",
+    "Suite time ~1.1 s because A1..A7 spawn ~30 node processes; zone declares suite_seconds: 2, so it fits with limited headroom.",
+    "Epic artifacts (evidence.json, state.json, notes.md) live in the main checkout via `git rev-parse --git-common-dir`, not in this worktree; inspecting the worktree alone will not show them.",
+    "examples/demo/test/acc_* is in must_not_touch, so acc_U1.test.js is frozen for the executor; a wrong test must be reported, not edited."
+   ]
+  }
+ },
+ {
+  "value": {
+   "json": "{\"ok\": true, \"set\": {\"stage\": \"spiked\", \"spike_verdict\": \"feasible\"}}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\"epic\": \"20260926-add-a-remove-command-to--6ace\", \"step\": \"units\", \"class\": \"T1\", \"stage\": \"building\", \"units\": [{\"id\": \"U1\", \"stage\": \"spiked\", \"round\": 0, \"class\": \"T1\", \"acceptance\": [\"A1\", \"A2\", \"A3\", \"A4\", \"A5\", \"A6\", \"A7\", \"A8\"], \"title\": \"todo remove <id>: store.remove + cli dispatch + usage line\"}], \"lane\": {\"max_files\": 8, \"max_lines\": 300, \"sendbacks_execute\": 2, \"calls\": 12, \"effort\": \"medium\", \"blind_lenses\": [\"customer\"], \"inspect_lenses\": [\"correctness\"]}}"
+  }
+ },
+ {
+  "value": {
+   "status": "pass",
+   "head_sha": "2d6b51e7858c977699d30f43ba6cc999748a629e",
+   "summary": "Added store.remove (mirrors complete: find by Number(id), throw `no item <id>`, splice and return), a `remove` case in cli.js that saves and returns `removed <id>`, `todo remove <id>` in the usage comment and usage error, plus test/remove.test.js; all 9 card checks (C1-C9) and zone lint recorded via sep unit run with exit 0 (npm test: 16/16 pass); committed as `U1 change set 3` on sep/20260926-add-a-remove-command-to--6ace/U1, not pushed.",
+   "files_touched": [
+    "/home/user/---/.claude/worktrees/wf_c0d7a44b-d05-31/examples/demo/src/store.js",
+    "/home/user/---/.claude/worktrees/wf_c0d7a44b-d05-31/examples/demo/src/cli.js",
+    "/home/user/---/.claude/worktrees/wf_c0d7a44b-d05-31/examples/demo/test/remove.test.js"
+   ],
+   "blocked_reason": ""
+  }
+ },
+ {
+  "value": {
+   "json": "{\"pass\": true, \"failed\": [], \"class_actual\": \"T1\", \"promoted\": false, \"diff\": {\"files\": 4, \"insertions\": 162, \"deletions\": 3}, \"mutants\": {\"applied\": 2, \"killed\": 2, \"survivors\": [], \"skipped\": false}, \"tails\": {}}"
+  }
+ },
+ {
+  "value": {
+   "verdict": "pass",
+   "findings": [
+    {
+     "claim": "After removing every item, the next `todo add` reuses id 1 (`add alpha; remove 1; add beta` -> `added 1`), because pre-existing allocation is max(ids)+1 with fallback 1 on an empty list. The card's Q2 default and C6 only pin the partial-removal case ({1,2} minus 1 -> `added 3`); whether ids may ever be reused after a full clear is unspecified by the request. Not a defect of this unit (behaviour is inherited from store.add, untouched), noted so the request owner can rule on it if id stability matters.",
+     "severity": "minor",
+     "origin": "request",
+     "file": "examples/demo/src/store.js",
+     "line": 16,
+     "repro": {
+      "cmd": "cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha && TODO_FILE=$D/t.json node src/cli.js remove 1 && TODO_FILE=$D/t.json node src/cli.js add delta",
+      "expect": "unspecified by A1-A8 (either `added 1` or `added 2` could be intended)",
+      "got": "added 1"
+     }
+    }
+   ],
+   "rerun_gate_pass": true,
+   "note": "Checked out sep/20260926-add-a-remove-command-to--6ace/U1 detached at 2d6b51e (branch is held by worktree d05-31). Re-ran in this worktree: `cd examples/demo && npm run lint` rc=0; `cd examples/demo && npm test` rc=0 (16 pass / 0 fail); every contract check C1..C9 executed verbatim via shell -> rc=0 each. Frozen check: `git diff 96b3af7..HEAD -- examples/demo/test/acc_U1.test.js` empty. Scope: only cli.js, store.js, acc_U1.test.js, remove.test.js changed (all in writes/test_writes). Diff review: store.remove mirrors complete (Number(id) lookup, `no item ${id}` throw, splice, returns item); cli.js calls remove before save so a failed remove never writes (C4 + A4 test byte-compare the file); usage string and header comment both updated; add/done/list untouched. Tests are not tautological: exact stdout, exit-status and file-content assertions, A8.x use a namespace import so a missing export fails as an assertion. Edge probes (no id -> `no item undefined` rc=1; `01`/`2.0` coerce and echo canonical id; `abc` -> `no item abc` rc=1; extra args ignored; missing file -> `no item 1` and no file created; double remove -> `no item 4`) all match the existing `done` semantics and the card's Q1/Q3 defaults. No rulings in packet; no conflicts. One minor request-level note about id reuse after emptying the list; nothing blocking."
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"cards\": [\n    {\n      \"sig\": \"9569b605\",\n      \"claim\": \"After removing every item, the next `todo add` reuses id 1 (`add alpha; remove 1; add beta` -> `added 1`), because pre-existing allocation is max(ids)+1 with fallback 1 on an empty list. The card's Q2 default and C6 only pin the partial-removal case ({1,2} minus 1 -> `added 3`); whether ids may ever be reused after a full clear is unspecified by the request. Not a defect of this unit (behaviour is inherited from store.add, untouched), noted so the request owner can rule on it if id stability matters.\",\n      \"file\": \"examples/demo/src/store.js\",\n      \"line\": 16,\n      \"repro\": {\n        \"cmd\": \"cd examples/demo && D=$(mktemp -d) && TODO_FILE=$D/t.json node src/cli.js add alpha && TODO_FILE=$D/t.json node src/cli.js remove 1 && TODO_FILE=$D/t.json node src/cli.js add delta\",\n        \"expect\": \"unspecified by A1-A8 (either `added 1` or `added 2` could be intended)\",\n        \"got\": \"added 1\"\n      },\n      \"hazard\": null,\n      \"origin\": \"request\",\n      \"severity\": \"minor\",\n      \"recorded\": \"2026-09-26T13:37:03.917Z\",\n      \"regress\": \"/home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/units/U1/tests/regress_9569b605.sh\"\n    }\n  ],\n  \"escalate\": false,\n  \"sigs_seen\": [\n    \"9569b605\"\n  ]\n}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"lens\": \"customer\",\n  \"verdict\": \"PASS\",\n  \"weight\": 1,\n  \"findings\": 1,\n  \"evidence\": 17,\n  \"leak_check\": {\n    \"canary_hit\": false,\n    \"forbidden_reads\": [\n      \"git log --oneline -10 && echo \\\"---DIFF STAT---\\\" && git diff HEAD~1 HEAD --stat\",\n      \"cd /tmp/sep-blind/0e4d841866b7/sandbox && git show HEAD~1:examples/demo/src/cli.js | grep -n \\\"remove\\\" ; echo \\\"---readme mentions---\\\"; grep -n \\\"remove\\\" README.md docs/*.md 2>/dev/null | head -20; echo \\\"---examples demo readme---\\\"; find examples/demo -iname \\\"*.md\\\" -o -iname \\\"README*\\\" | xargs -I{} sh -c 'echo ==={}===; cat {}' 2>/dev/null | grep -n -i remove\"\n    ],\n    \"narrative_terms\": [],\n    \"clean\": true\n  },\n  \"inferred_intent\": \"Add a `remove` subcommand to the toy todo CLI (examples/demo) so users can delete an item by id, mirroring the existing `add`/`done`/`list` commands, with matching success/error text, no side effects on failure, and updated usage text and tests.\",\n  \"error\": null\n}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\"ok\":true,\"set\":{\"intent_match\":\"UNKNOWN\"}}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"row\": 19,\n  \"action\": \"MERGE\",\n  \"target\": \"integration\",\n  \"why\": \"all separators passed\",\n  \"inputs\": {\n    \"G\": \"pass\",\n    \"S\": \"yes\",\n    \"I\": \"pass\",\n    \"Bc\": \"PASS\",\n    \"Bk\": \"skipped\",\n    \"Bs\": \"skipped\",\n    \"L\": \"clean\",\n    \"E\": \"ok\",\n    \"M\": \"UNKNOWN\",\n    \"H\": 0,\n    \"R\": \"pending\"\n  },\n  \"counters\": {\n    \"execute\": 0,\n    \"contract\": 0,\n    \"decompose\": 0,\n    \"intake\": 0\n  },\n  \"exec_retries\": 0\n}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"merged\": true,\n  \"integration\": \"integration\",\n  \"sha\": \"a3f3f387d2d9baf69a050e45e170eab1dc846c31\"\n}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"step\": \"learn\",\n  \"class\": \"T1\",\n  \"stage\": \"learn\",\n  \"merged\": [\n    \"U1\"\n  ],\n  \"parked\": []\n}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"ok\": true,\n  \"zones\": [\n    {\n      \"zone\": \"demo\",\n      \"test\": true,\n      \"invariants\": []\n    }\n  ]\n}"
+  }
+ },
+ {
+  "value": {
+   "lessons_added": [],
+   "proposals": [
+    "Harness/tooling: the prober's worktree kept the unit branch after `unit finish`, so the executor's first dispatch failed with 'checkout failed: branch already used by worktree' and U1 had to be re-spiked (attempt 2, an empty commit `U1 change set 2`). Propose that `sep unit finish` (or `unit start`) release the previous worktree's branch automatically; evidence: .separator/metrics.jsonl lines 5-10 (two spike unit_start/unit_finish pairs for U1) and .separator/epics/20260926-add-a-remove-command-to--6ace/units/U1/notes.md lines 2-3 (SCOPE-REQUEST + re-run note).",
+    "Request-owner ruling needed (not a floor change): id reuse after the list is fully emptied (`add; remove 1; add` -> `added 1`) is unspecified by the request and inherited from store.add; propose a one-line ruling in .separator/rulings.md so future todo epics pin it; evidence: units/U1/defects/9569b605.json and units/U1/decision.json defer[0].",
+    "Card template: acceptance lines that say 'print <msg>' should name the stream (stdout/stderr); the spike had to flag the ambiguity and the tests fell back to 2>&1; evidence: units/U1/spike.json risks[2] and units/U1/notes.md line 1 (Risks: A3 says 'print' without naming the stream)."
+   ]
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"ok\": true,\n  \"set\": {\n    \"stage\": \"done\"\n  }\n}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"step\": \"done\",\n  \"class\": \"T1\",\n  \"stage\": \"done\",\n  \"merged\": [\n    \"U1\"\n  ],\n  \"parked\": []\n}"
+  }
+ }
+]

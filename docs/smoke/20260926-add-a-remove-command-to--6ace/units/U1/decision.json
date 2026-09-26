@@ -1,0 +1,38 @@
+{
+  "unit": "U1",
+  "epic": "20260926-add-a-remove-command-to--6ace",
+  "class": "T1",
+  "row": 19,
+  "action": "MERGE",
+  "target": "integration",
+  "why": "all separators passed",
+  "inputs": {
+    "G": "pass",
+    "S": "yes",
+    "I": "pass",
+    "Bc": "PASS",
+    "Bk": "skipped",
+    "Bs": "skipped",
+    "L": "clean",
+    "E": "ok",
+    "M": "UNKNOWN",
+    "H": 0,
+    "K": {
+      "execute": 0,
+      "contract": 0,
+      "decompose": 0,
+      "intake": 0,
+      "exec_retries": 0,
+      "integration_rounds": 0,
+      "calls": 1,
+      "blind_reruns": 0
+    },
+    "R": "pending"
+  },
+  "diff_sha256": "14e92edae6fc195877c5d6e122d34866a359f9e08bbec0efa7122aaa3bacf9ab",
+  "at": "2026-09-26T13:38:57.607Z",
+  "defer": [
+    "After removing every item, the next `todo add` reuses id 1 (`add alpha; remove 1; add beta` -> `added 1`), because pre-existing allocation is max(ids)+1 with fallback 1 on an empty list. The card's Q2 default and C6 only pin the partial-removal case ({1,2} minus 1 -> `added 3`); whether ids may ever be reused after a full clear is unspecified by the request. Not a defect of this unit (behaviour is inherited from store.add, untouched), noted so the request owner can rule on it if id stability matters.",
+    "examples/demo has no dedicated README/usage doc of its own (only inline comments in cli.js and the SEP tool's top-level README, which is unrelated to this app). A user exploring examples/demo for docs on the new `remove` command would only find it via `--help`-style usage text or the source, not a written doc. Not covered by any acceptance criterion and the demo never had a README before this change either, so this is not a regression, just a pre-existing gap a customer might still grumble about."
+  ]
+}

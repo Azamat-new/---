@@ -1,0 +1,46 @@
+{
+  "verdict": "feasible",
+  "hypotheses": [
+    {
+      "claim": "The feature is genuinely missing on the base: examples/demo/src/store.js exports no `remove` and examples/demo/src/cli.js has no `remove` case, so the acceptance test is red for the right reason (missing feature), not a syntax/import error.",
+      "result": "supported",
+      "how": "grep '^export' store.js -> load/save/add/complete/list/format only; grep cli.js switch -> add/done/list + default usage throw. Runtime: `TODO_FILE=$D/t.json node src/cli.js add alpha` then `remove 1` -> stderr `usage: todo add <text> | todo list [--open] | todo done <id>`, rc=1, t.json unchanged. `node --check test/acc_U1.test.js` passes; red proof shows all 9 failures as ERR_ASSERTION, none SyntaxError/ERR_MODULE."
+    },
+    {
+      "claim": "The zone test command `npm test` (= `node --test test/*.test.js` per examples/demo/package.json) discovers a newly added examples/demo/test/acc_U1.test.js.",
+      "result": "supported",
+      "how": "Dropped a throwaway examples/demo/test/zz_probe.test.js and ran `npm test`: output listed `ok 14 - zz probe`, `# tests 14`; probe deleted in the same command (ls test/ shows only acc_U1.test.js and store.test.js). Recorded C9 run shows 13 tests = 4 store.test.js pass + 9 acc_U1 fail."
+    },
+    {
+      "claim": "The error path the card tells the executor to mirror (`complete` throws Error(`no item ${id}`); cli.js writes e.message to stderr and exits 1) behaves as assumed, including `no item undefined` for a missing id (card's Q1 default), and today's usage line does not mention `todo remove <id>` (so A7 is red now).",
+      "result": "supported",
+      "how": "Ran `todo done 42` -> `no item 42` rc=1; `todo done` (no id) -> `no item undefined` rc=1; `todo bogus` -> usage line without `todo remove <id>`, rc=1. Read cli.js main guard: `process.stderr.write(e.message + '\\n'); process.exit(1)`."
+    },
+    {
+      "claim": "Id allocation is max(existing ids)+1 so C6's `added 3` after removing id 1 from {1,2} holds, and removing the last item makes `todo list` print nothing (C5 checks -z).",
+      "result": "supported",
+      "how": "Read store.js:16 `Math.max(...state.items.map(i => i.id)) + 1` (else 1) and cli.js:33 `if (out) process.stdout.write(out + '\\n')`, so format([]) === '' prints nothing. Post-remove runtime path cannot be executed until remove exists; the code is unambiguous."
+    },
+    {
+      "claim": "`sep unit run` executes the check command verbatim through a shell (so `cd examples/demo && ...` works) and `sep unit finish --status pass` is accepted and commits only the test with a neutral message.",
+      "result": "supported",
+      "how": "grep .separator/bin/sep.cjs: line 24 `cp.spawnSync(cmd, { shell: true, ... })`, line 381 `ev.status = opt.status || 'pass'`. Both unit run calls printed `[sep] recorded: exit=1`; finish returned head_sha 96b3af7d, files_touched=[examples/demo/test/acc_U1.test.js], commands_recorded=4; `git diff --name-only 474f915..HEAD` = exactly examples/demo/test/acc_U1.test.js; commit subjects `U1 change set 1`/`U1 change set 2`; worktree clean."
+    }
+  ],
+  "red_proof": {
+    "cmd": "node .separator/bin/sep.cjs unit run 20260926-add-a-remove-command-to--6ace U1 -- \"cd examples/demo && node --test test/acc_U1.test.js\"  (9 tests, 0 pass, 9 fail, all code ERR_ASSERTION on the missing feature). Also recorded: node .separator/bin/sep.cjs unit run 20260926-add-a-remove-command-to--6ace U1 -- \"cd examples/demo && npm test\"  (13 tests, 4 pass [store.test.js], 9 fail [acc_U1], exit 1)",
+    "exit": 1
+  },
+  "tests_written": [
+    "/home/user/---/.claude/worktrees/wf_c0d7a44b-d05-27/examples/demo/test/acc_U1.test.js  (already committed by the previous prober run as 7ef7f0d84a2145bd137714e4bd908cb76042816a on sep/20260926-add-a-remove-command-to--6ace/U1; verified intact and unchanged in this run, HEAD now 96b3af7d44f93911647326f664d4f0585f79d0b7 after an empty finish commit; 9 tests: A1..A7 spawn the real CLI via child_process.spawnSync with a per-test TODO_FILE and assert stdout/stderr/exit status; A8.1/A8.2 exercise store.remove through a namespace import so a missing export fails as a clean assertion, not a module-link error)"
+  ],
+  "risks": [
+    "No new work was needed: the previous prober (worktree wf_c0d7a44b-d05-15) had already written and committed the tests; this run only re-verified the claims, re-recorded both red proofs through `sep unit run`, and finished. `unit finish` on a clean tree created an EMPTY commit `U1 change set 2` (96b3af7); harmless, but the executor's first commit will be `change set 3`.",
+    "INFRA (same as the card's unknown #4): this worktree (.claude/worktrees/wf_c0d7a44b-d05-27) now holds the unit branch sep/20260926-add-a-remove-command-to--6ace/U1. The harness released d05-15 automatically on `unit start` (`released: ok: true`), so the same auto-release should work for the executor dispatch; if it does not, release d05-27 from the main checkout before dispatching U1 to the executor.",
+    "A3/A4 say 'print `no item <id>`' without naming the stream; the mirrored `done` path prints to stderr. The acceptance tests (like the card's C3/C4 with `2>&1`) compare stdout+stderr combined, so either stream passes; the executor must keep the message exact (`no item 42`, nothing else) and the exit non-zero.",
+    "cli.js's main guard `import.meta.url === \\`file://${process.argv[1]}\\`` is pre-existing and path-sensitive (no percent-encoding). Works at this worktree path and the main checkout path; a checkout path with spaces, `%` or non-ASCII would make the CLI a silent no-op and every CLI-level acceptance test would fail confusingly. Gate/sandbox should run from an ASCII path.",
+    "Suite time ~1.1 s because A1..A7 spawn ~30 node processes; zone declares suite_seconds: 2, so it fits with limited headroom.",
+    "Epic artifacts (evidence.json, state.json, notes.md) live in the main checkout via `git rev-parse --git-common-dir`, not in this worktree; inspecting the worktree alone will not show them.",
+    "examples/demo/test/acc_* is in must_not_touch, so acc_U1.test.js is frozen for the executor; a wrong test must be reported, not edited."
+  ]
+}

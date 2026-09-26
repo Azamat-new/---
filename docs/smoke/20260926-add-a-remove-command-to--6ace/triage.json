@@ -1,0 +1,80 @@
+{
+  "class": "T1",
+  "signals": [
+    "one zone (demo), 3 files, ~30 lines: fits T0 by size",
+    "additive CLI command; existing commands and todo.json shape untouched",
+    "the new command deletes a user item on explicit request (no undo) — 'data deletion' signal, so classified up from T0 to T1",
+    "usage string (the CLI's only user-facing contract) gains a line; not a breaking contract change",
+    "no migrations, auth, infra, lockfiles or serialized resources touched"
+  ],
+  "zones": [
+    "demo"
+  ],
+  "est_paths": [
+    "examples/demo/src/cli.js",
+    "examples/demo/src/store.js",
+    "examples/demo/test/store.test.js"
+  ],
+  "est_files": 3,
+  "est_lines": 30,
+  "unknowns": [
+    "behaviour of `todo remove` with no id argument (request only specifies unknown ids)",
+    "whether a removed id may later be reused by `todo add` (current id assignment is max+1)",
+    "whether `removed <id>` should echo the argument as typed or the stored numeric id (e.g. `remove 01`)"
+  ],
+  "ambiguity": 0.15,
+  "questions": [
+    {
+      "id": "Q1",
+      "text": "What should `todo remove` do when no id is given at all?",
+      "default": "Mirror the existing `todo done`: any id that matches no item, including a missing one, is reported as `no item <id>` with a non-zero exit.",
+      "why": "Only affects an edge case outside the request; the default is consistent with current behaviour and needs no new rule."
+    },
+    {
+      "id": "Q2",
+      "text": "After removing the item with the highest id, may `todo add` reuse that id?",
+      "default": "Keep the current id assignment unchanged (max+1), so reuse is possible; ids are not promised to be unique over time.",
+      "why": "Changing id allocation would touch add and the file format; nothing in the request asks for it."
+    },
+    {
+      "id": "Q3",
+      "text": "Should removing an item that is already done be allowed?",
+      "default": "Yes: any existing id can be removed, done or open.",
+      "why": "The request says 'delete an item by id' without restriction; refusing would need a second error message it does not define."
+    }
+  ],
+  "assumptions": [
+    {
+      "text": "Missing id is treated like an unknown id (`no item <id>`, non-zero exit), as `todo done` does today.",
+      "kind": "intent"
+    },
+    {
+      "text": "Id assignment for `todo add` stays max+1; a removed top id may be reused.",
+      "kind": "intent"
+    },
+    {
+      "text": "Done items can be removed exactly like open items.",
+      "kind": "intent"
+    },
+    {
+      "text": "`removed <id>` prints the stored numeric id (as `done <id>` does), not the raw argument text.",
+      "kind": "cosmetic"
+    },
+    {
+      "text": "The usage line in the CLI and the usage comment at the top of cli.js both mention `todo remove <id>`.",
+      "kind": "cosmetic"
+    },
+    {
+      "text": "On an unknown id the todo.json file is not rewritten.",
+      "kind": "intent"
+    }
+  ],
+  "irreversible": false,
+  "premortem": "",
+  "batch": [],
+  "class_final": "T1",
+  "class_floor": "T1",
+  "floor_signals": [
+    "unknowns"
+  ]
+}

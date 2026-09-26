@@ -1,0 +1,1 @@
+Add a `remove` command to the demo todo CLI (examples/demo) so a user can delete an item by id: `todo remove <id>` prints `removed <id>` and the item no longer appears in `todo list`; for an unknown id it must exit non-zero with the message `no item <id>`.

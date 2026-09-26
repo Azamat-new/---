@@ -1,6 +1,6 @@
 # STATUS — где мы и как продолжить (файл передачи)
 
-Дата: 2026-09-26. Ветка: `claude/pensive-knuth-lvfjko`. Схема: https://www.figma.com/board/7VgCIMCMOK2WroyMvOEAxT
+Дата: 2026-09-26. Сессия остановлена по лимиту; фоновые результаты сохранены частично в docs/design/*-journal-partial.json и docs/smoke/ (артефакты незавершённого дымового теста: триаж, критерии, проверка намерения). Ветка: `claude/pensive-knuth-lvfjko`. Схема: https://www.figma.com/board/7VgCIMCMOK2WroyMvOEAxT
 
 ## Что достигнуто (проверено)
 

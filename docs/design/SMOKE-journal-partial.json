@@ -1,0 +1,115 @@
+[
+ {
+  "value": {
+   "json": "{\"epic\": \"20260926-add-a-remove-command-to--6ace\", \"dir\": \"/home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace\", \"base_sha\": \"474f915e6cbb033f3e5d689464f1133e1a4a1fbc\"}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"step\": \"triage\",\n  \"class\": null,\n  \"stage\": \"intake\",\n  \"request\": \"Add a `remove` command to the demo todo CLI (examples/demo) so a user can delete an item by id: `todo remove <id>` prints `removed <id>` and the item no longer appears in `todo list`; for an unknown id it must exit non-zero with the message `no item <id>`.\",\n  \"has_zones\": true\n}"
+  }
+ },
+ {
+  "value": {
+   "acceptance": [
+    "Running `todo remove <id>` with an existing id prints exactly `removed <id>` and exits zero.",
+    "After `todo remove <id>` succeeds, that item no longer appears in the output of `todo list`.",
+    "Running `todo remove <id>` with an unknown id prints the message `no item <id>`.",
+    "For an unknown id, `todo remove <id>` exits with a non-zero status.",
+    "The `remove` command lives in the demo todo CLI under examples/demo, alongside the existing commands.",
+    "Existing commands (e.g. `todo list`) keep working as before after the change."
+   ]
+  }
+ },
+ {
+  "value": {
+   "class": "T1",
+   "acceptance": [
+    {
+     "id": "A1",
+     "text": "WHEN the user runs `todo remove <id>` and an item with that id exists THE SYSTEM SHALL print `removed <id>` on stdout and exit with status 0."
+    },
+    {
+     "id": "A2",
+     "text": "WHEN the user runs `todo list` after a successful `todo remove <id>` THE SYSTEM SHALL show no line for that id while every other item still appears exactly as before."
+    },
+    {
+     "id": "A3",
+     "text": "WHEN the user runs `todo remove <id>` and no item with that id exists THE SYSTEM SHALL print `no item <id>` and exit with a non-zero status."
+    },
+    {
+     "id": "A4",
+     "text": "WHEN `todo remove <id>` fails with `no item <id>` THE SYSTEM SHALL leave the output of `todo list` identical to what it was before the attempt."
+    },
+    {
+     "id": "A5",
+     "text": "WHEN the user runs `todo remove <id>` for an item already marked done THE SYSTEM SHALL remove it the same way as an open item."
+    },
+    {
+     "id": "A6",
+     "text": "WHEN the user runs `todo add`, `todo done` or `todo list` after a `todo remove` THE SYSTEM SHALL keep working on the saved file exactly as before."
+    },
+    {
+     "id": "A7",
+     "text": "WHEN the user runs `todo` with an unknown command THE SYSTEM SHALL print a usage line that mentions `todo remove <id>`."
+    },
+    {
+     "id": "A8",
+     "text": "(internal) WHEN `cd examples/demo && npm test` runs THE SYSTEM SHALL pass, including a test that removes a known id and one that rejects an unknown id with `no item <id>`."
+    }
+   ],
+   "questions": [
+    {
+     "id": "Q1",
+     "text": "What should `todo remove` do when no id is given at all?",
+     "default": "Mirror the existing `todo done`: any id that matches no item, including a missing one, is reported as `no item <id>` with a non-zero exit.",
+     "why": "Only affects an edge case outside the request; the default is consistent with current behaviour and needs no new rule."
+    },
+    {
+     "id": "Q2",
+     "text": "After removing the item with the highest id, may `todo add` reuse that id?",
+     "default": "Keep the current id assignment unchanged (max+1), so reuse is possible; ids are not promised to be unique over time.",
+     "why": "Changing id allocation would touch add and the file format; nothing in the request asks for it."
+    },
+    {
+     "id": "Q3",
+     "text": "Should removing an item that is already done be allowed?",
+     "default": "Yes: any existing id can be removed, done or open.",
+     "why": "The request says 'delete an item by id' without restriction; refusing would need a second error message it does not define."
+    }
+   ],
+   "est_paths": [
+    "examples/demo/src/cli.js",
+    "examples/demo/src/store.js",
+    "examples/demo/test/store.test.js"
+   ],
+   "files_written": [
+    "/home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/ACCEPTANCE.md",
+    "/home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/triage.json"
+   ]
+  }
+ },
+ {
+  "value": {
+   "mismatch": false,
+   "missing": [],
+   "extra": [
+    "A4: failed remove leaves `todo list` output unchanged",
+    "A5: removing a done item works the same as an open item",
+    "A7: usage line for unknown command mentions `todo remove <id>`",
+    "A8: npm test in examples/demo passes with remove tests (internal)"
+   ],
+   "note": "All user-visible outcomes in the independent reading are covered by triage A1, A2, A3, A6; the examples/demo location constraint is implied by A8 and is not user-visible. Triage is a strict superset. Result written to /home/user/---/.separator/epics/20260926-add-a-remove-command-to--6ace/intent-check.json"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"class\": \"T1\",\n  \"floor\": \"T1\",\n  \"signals\": [\n    \"unknowns\"\n  ],\n  \"unmapped\": [],\n  \"lane\": {\n    \"max_files\": 8,\n    \"max_lines\": 300,\n    \"sendbacks_execute\": 2,\n    \"calls\": 12,\n    \"effort\": \"medium\",\n    \"blind_lenses\": [\n      \"customer\"\n    ],\n    \"inspect_lenses\": [\n      \"correctness\"\n    ]\n  }\n}"
+  }
+ },
+ {
+  "value": {
+   "json": "{\n  \"epic\": \"20260926-add-a-remove-command-to--6ace\",\n  \"step\": \"plan\",\n  \"class\": \"T1\",\n  \"stage\": \"classified\",\n  \"lane\": {\n    \"max_files\": 8,\n    \"max_lines\": 300,\n    \"sendbacks_execute\": 2,\n    \"calls\": 12,\n    \"effort\": \"medium\",\n    \"blind_lenses\": [\n      \"customer\"\n    ],\n    \"inspect_lenses\": [\n      \"correctness\"\n    ]\n  },\n  \"retry\": null\n}"
+  }
+ }
+]

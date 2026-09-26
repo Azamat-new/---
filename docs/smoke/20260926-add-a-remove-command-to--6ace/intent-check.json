@@ -1,0 +1,27 @@
+{
+  "acs_from_request": [
+    "Running `todo remove <id>` with an existing id prints exactly `removed <id>` and exits zero.",
+    "After `todo remove <id>` succeeds, that item no longer appears in the output of `todo list`.",
+    "Running `todo remove <id>` with an unknown id prints the message `no item <id>`.",
+    "For an unknown id, `todo remove <id>` exits with a non-zero status.",
+    "The `remove` command lives in the demo todo CLI under examples/demo, alongside the existing commands.",
+    "Existing commands (e.g. `todo list`) keep working as before after the change."
+  ],
+  "matched": [
+    {"independent": "Running `todo remove <id>` with an existing id prints exactly `removed <id>` and exits zero.", "triage": "A1"},
+    {"independent": "After `todo remove <id>` succeeds, that item no longer appears in the output of `todo list`.", "triage": "A2"},
+    {"independent": "Running `todo remove <id>` with an unknown id prints the message `no item <id>`.", "triage": "A3"},
+    {"independent": "For an unknown id, `todo remove <id>` exits with a non-zero status.", "triage": "A3"},
+    {"independent": "The `remove` command lives in the demo todo CLI under examples/demo, alongside the existing commands.", "triage": "A8 (implicitly: tests run in examples/demo)"},
+    {"independent": "Existing commands (e.g. `todo list`) keep working as before after the change.", "triage": "A6"}
+  ],
+  "missing": [],
+  "extra": [
+    "A4: failed remove leaves `todo list` output unchanged",
+    "A5: removing a done item works the same as an open item",
+    "A7: usage line for unknown command mentions `todo remove <id>`",
+    "A8: npm test in examples/demo passes with remove tests (internal)"
+  ],
+  "mismatch": false,
+  "note": "Every user-visible outcome in the independent reading is covered by the triage (A1, A2, A3, A6). The location constraint (examples/demo) has no explicit triage AC but is implied by A8 and is not a user-visible outcome. Triage is a strict superset: A4, A5, A7 and A8 refine the request beyond the independent reading, which is acceptable."
+}

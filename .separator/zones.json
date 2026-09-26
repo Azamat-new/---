@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "risk_paths": [
+    { "glob": "**/migrations/**", "floor": "T2" },
+    { "glob": "**/auth/**", "floor": "T2" },
+    { "glob": ".separator/bin/**", "floor": "T2" },
+    { "glob": ".claude/settings.json", "floor": "T2" }
+  ],
+  "zones": [
+    {
+      "id": "demo",
+      "paths": ["examples/demo/**"],
+      "lang": "javascript",
+      "owner": "maintainer",
+      "commands": { "setup": null, "build": null, "test": "cd examples/demo && npm test", "fast": "cd examples/demo && npm run lint", "lint": "cd examples/demo && npm run lint", "run": "cd examples/demo && node src/cli.js", "mutate": null },
+      "test_globs": ["examples/demo/test/**"],
+      "serialized_resources": [],
+      "invariants": [{ "text": "the todo.json file format stays backward compatible", "check": null }],
+      "persona": "small CLI maintainer: simple, no dependencies",
+      "risk_floor": "T0",
+      "confidence": "declared",
+      "suite_seconds": 2
+    },
+    {
+      "id": "separator",
+      "paths": [".separator/**", ".claude/**", ".githooks/**"],
+      "lang": "javascript",
+      "owner": "maintainer",
+      "commands": { "setup": null, "build": null, "test": "node .separator/bin/sep.cjs selftest", "fast": "node --check .separator/bin/sep.cjs", "lint": "node --check .separator/bin/sep.cjs", "run": null, "mutate": null },
+      "test_globs": ["tests/**"],
+      "serialized_resources": [".claude/settings.json"],
+      "invariants": [{ "text": "sep selftest passes", "check": "node .separator/bin/sep.cjs selftest" }],
+      "persona": "harness maintainer: enforcement first, zero dependencies",
+      "risk_floor": "T2",
+      "confidence": "declared",
+      "suite_seconds": 5
+    },
+    {
+      "id": "docs",
+      "paths": ["README.md", "SEPARATOR.md", "AGENTS.md", "CLAUDE.md", "docs/**"],
+      "lang": "markdown",
+      "owner": "maintainer",
+      "commands": { "setup": null, "build": null, "test": null, "fast": null, "lint": null, "run": null, "mutate": null },
+      "test_globs": [],
+      "serialized_resources": [],
+      "invariants": [],
+      "persona": "technical writer: Russian for readers, English for code",
+      "risk_floor": "T0",
+      "confidence": "declared",
+      "suite_seconds": 0
+    }
+  ],
+  "default": { "id": "default", "paths": ["**"], "lang": null, "commands": { "setup": null, "build": null, "test": null, "fast": null, "lint": null, "run": null, "mutate": null }, "test_globs": ["**/test/**", "**/tests/**", "**/*.test.*", "**/*_test.*", "**/*.spec.*"], "serialized_resources": [], "invariants": [], "persona": "", "risk_floor": "T1", "confidence": "inferred", "suite_seconds": null }
+}

@@ -1,3 +1,8 @@
 node_modules/
 todo.json
 .claude/worktrees/
+# separator (run artifacts must never be committed: blind sandboxes are built from git)
+.separator/epics/
+.separator/locks.json
+.separator/selftest.json
+.sep-role

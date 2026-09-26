@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "lanes": {
+    "T0": {
+      "max_files": 3,
+      "max_lines": 80,
+      "sendbacks_execute": 1,
+      "calls": 4,
+      "effort": "low",
+      "blind_lenses": [
+        "cold"
+      ],
+      "inspect_lenses": []
+    },
+    "T1": {
+      "max_files": 8,
+      "max_lines": 300,
+      "sendbacks_execute": 2,
+      "calls": 12,
+      "effort": "medium",
+      "blind_lenses": [
+        "customer"
+      ],
+      "inspect_lenses": [
+        "correctness"
+      ]
+    },
+    "T2": {
+      "max_files": 20,
+      "max_lines": 800,
+      "sendbacks_execute": 2,
+      "calls": 24,
+      "effort": "high",
+      "blind_lenses": [
+        "customer",
+        "cold"
+      ],
+      "inspect_lenses": [
+        "correctness",
+        "blast-radius"
+      ]
+    },
+    "T3": {
+      "max_files": 40,
+      "max_lines": 2000,
+      "sendbacks_execute": 3,
+      "calls": 40,
+      "effort": "high",
+      "blind_lenses": [
+        "customer",
+        "cold",
+        "security"
+      ],
+      "inspect_lenses": [
+        "correctness",
+        "blast-radius"
+      ]
+    }
+  },
+  "counters": {
+    "exec_retries": 1,
+    "sendbacks_contract": {
+      "T0": 0,
+      "T1": 1,
+      "T2": 2,
+      "T3": 2
+    },
+    "sendbacks_decompose": {
+      "T0": 0,
+      "T1": 1,
+      "T2": 1,
+      "T3": 1
+    },
+    "sendbacks_intake": 1,
+    "integration_rounds": 2,
+    "human_escalations": 3
+  },
+  "gate": {
+    "mutants": true,
+    "max_mutants": 3,
+    "max_gate_seconds": 600,
+    "skip_markers": true,
+    "secrets": true
+  },
+  "hazard_classes": [
+    "auth",
+    "authz",
+    "data-loss",
+    "migration",
+    "concurrency",
+    "secrets",
+    "pii",
+    "performance-hot-path",
+    "irreversible-external"
+  ],
+  "strip": [
+    "CLAUDE.md",
+    "CLAUDE.local.md",
+    "AGENTS.md",
+    ".claude/**",
+    ".separator/**",
+    ".cursor/**",
+    ".github/copilot*",
+    "docs/decisions/**",
+    "CHANGELOG*",
+    "**/PULL_REQUEST_TEMPLATE*",
+    ".env*",
+    "**/secrets/**",
+    ".githooks/**"
+  ],
+  "frozen_globs": [
+    "**/acc_*",
+    "**/regress_*"
+  ],
+  "blind": {
+    "model": "",
+    "max_turns": 30,
+    "timeout_seconds": 900,
+    "launcher": "claude"
+  },
+  "integration_branch": "integration",
+  "notify": "terminal"
+}

@@ -13,3 +13,4 @@
 {"ts":"2026-09-26T13:34:45.984Z","epic":"20260926-add-a-remove-command-to--6ace","unit":"U1","stage":"gate","event":"gate","pass":true,"failed":[],"ms":8709,"class_actual":"T1","promoted":false}
 {"ts":"2026-09-26T13:37:03.918Z","epic":"20260926-add-a-remove-command-to--6ace","unit":"U1","stage":"ratchet","event":"ratchet","new_sigs":1,"repeats":0}
 {"ts":"2026-09-26T13:38:32.457Z","epic":"20260926-add-a-remove-command-to--6ace","unit":"U1","stage":"blind","event":"lens","lens":"customer","verdict":"PASS","weight":1,"leak_clean":true,"ms":78156}
+{"ts":"2026-09-26T13:39:39.965Z","epic":"20260926-add-a-remove-command-to--6ace","unit":null,"stage":"integrate","event":"check","ok":true}

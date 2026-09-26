@@ -894,3 +894,47 @@ Open decisions deliberately left to the user (few):
 4. **Auto-approval of T2 contracts (H1) per zone** — zone owners may set `auto_approve_after_h`; default off.
 5. **Hazard class list** — the default seven classes (§5.3) should be edited for the project (e.g. add "billing
    rounding" or "GDPR export"); this list is the only place where an unreproducible finding can force a human touch.
+
+
+## Errata v1.1 (after empirical verification in the build session, 2026-09-26)
+
+The reference implementation deviates from §7.3, §12.1, §12.2 and §12.4 where those sections relied on mechanisms
+that turned out not to exist or not to be blind. Verified facts are in `docs/research/claude-code-mechanics.md` §9;
+the round-1 adversarial findings are in `docs/design/VERIFY-round1-findings.txt`.
+
+1. **Agent frontmatter `hooks:` do not fire** (Claude Code 2.1.283). All enforcement lives in global
+   `.claude/settings.json` hooks (`guard-write`, `guard-bash`) that branch on the `agent_type` and `cwd` the hook
+   receives; worktree agents are identified by `.sep-role` written by `sep unit start`. SubagentStart/SubagentStop
+   agent-scoped hooks (`assert-sandbox.sh`, `require-evidence.sh`, `red-proof.sh`) are not implemented; their checks
+   moved into `sep gate` (red proof is enforced by "frozen tests changed since tests_sha" + gate) and into the
+   evidence recording of `sep unit run`.
+2. **Blind lenses never run as workflow subagents.** A subagent shares the session's project context; instead
+   `sep blind` builds the sandbox OUTSIDE the project (`$TMPDIR/sep-blind/<random>/sandbox`, two neutral commits,
+   strip list) and launches a separate process: `claude -p --restricted --tools … --allowedTools … --agents <json>
+   --agent sep-outsider-<lens> --settings <guard-blind hook> --json-schema …` from inside the sandbox. `--restricted`
+   confines file tools to the sandbox (verified: a Read of a project file was denied); Bash is filtered by the hook
+   (parent paths, absolute project paths, git history, environment dumps, network); the canary and narrative scan
+   detect leaks. §7.2 "sandbox inside `epics/<epic>/blind/<u>/`" is withdrawn.
+3. **Custom agents register at session start only.** `agent(prompt, {agentType})` throws for an unregistered type;
+   `sep-run.js` wraps every role call and falls back to the default agent reading its role card ("soft mode", logged).
+   Installation docs require a restart for enforced mode.
+4. **Worktree branch naming.** Subagent worktrees are created on `worktree-<run>-<n>` from the session HEAD, not on
+   `sep/<epic>/<unit>`; `sep unit start` checks out the unit branch from `base_sha` inside the worktree and writes the
+   role marker. Hooks identify the unit from the marker or the branch.
+5. **`.separator/epics/` is invisible inside worktrees** (gitignored). Roles never read run artifacts by path from a
+   worktree; `sep unit packet` prints the role's pack, and `sep` resolves the main checkout through
+   `git rev-parse --git-common-dir`. Findings are recorded by the driver, not written by the agent from the worktree.
+6. **Workflow scripts cannot run commands.** Every mechanical step (gate, sandbox, blind, decide, merge, next) is
+   executed by a cheap runner agent that returns the printed JSON verbatim; the CLI remains the source of truth.
+7. **One driver loop instead of five scripts.** §12.2's `sep-intake/plan/build/learn/fast.js` collapsed into
+   `sep-run.js` looping on `sep next <epic>`, which is the state machine (§13's bash driver follows the same loop).
+   Human boundaries are `ask`/`human` returns; resume is free because state lives in files.
+8. **Decision table.** `sep decide` implements rows 1–22 with a final MERGE row so no input combination is undefined;
+   `RERUN-BLIND` is bounded by `blind_reruns` (1) and then escalates; `PROMOTE` re-runs inspection and blind lenses at
+   the new class without re-running S2/S4 for a unit that already has a diff (finding termination-promotion-mid-wave).
+9. **Ratchet tests live in the run directory** (`units/<u>/tests/regress_<sig>.sh`), not in the repository tree, so
+   the blind sandbox never sees review provenance (finding blindness-frozen-tests-leak-provenance).
+10. **Dependencies in the sandbox.** `sep sandbox` runs the zone's `setup` command inside the sandbox before a lens
+    starts (finding universality-sandbox-no-deps); vendored or dependency-free zones need nothing.
+11. Not yet implemented from v1: S1b bootstrap of characterization tests, T3 design panel, `sep-judge` on a lens split,
+    cross-vendor lens, `sep revert` / `sep escape`, H4 digest command, SubagentStop fast gate. Listed in `docs/STATUS.md`.

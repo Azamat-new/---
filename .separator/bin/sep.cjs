@@ -570,7 +570,9 @@ commands.sandbox = ({ pos, opt }) => {
     if (exists(accP)) fs.writeFileSync(path.join(sb, 'SEP-ACCEPTANCE.md'), fs.readFileSync(accP, 'utf8').replace(new RegExp(e, 'g'), 'this change'));
     fs.writeFileSync(path.join(sb, 'SEP-COMMANDS.json'), JSON.stringify({ setup: zone.commands.setup, build: zone.commands.build, test: zone.commands.test, run: zone.commands.run, checks: (card.checks || []).filter(c => c.kind !== 'observation').map(c => ({ id: c.id, cmd: c.cmd, expect: c.expect || 'exit 0' })) }, null, 2));
   }
-  const manifest = { epic: e, unit: u, lens, sandbox: sb, base_sha: card.base_sha, head_sha: head, stripped: strip, tree_hash: treeHash(sb), canary_id: st.canary, leaks, built: nowISO() };
+  // dependencies: the zone's setup command runs once inside the sandbox (network is the project's own choice; vendored deps need nothing)
+  const setup = zone.commands.setup ? runCmd(zone.commands.setup, sb, pol.gate.max_gate_seconds) : { skipped: true, ok: true };
+  const manifest = { epic: e, unit: u, lens, sandbox: sb, base_sha: card.base_sha, head_sha: head, stripped: strip, tree_hash: treeHash(sb), canary_id: st.canary, leaks, setup: { cmd: zone.commands.setup, ok: setup.ok, skipped: !!setup.skipped }, built: nowISO() };
   writeJSON(path.join(unitDir(e, u), 'blind', `manifest-${lens}.json`), manifest);
   out({ sandbox: sb, lens, leaks, tree_hash: manifest.tree_hash, diff_lines: diff.split('\n').length });
   if (leaks.length) process.exit(1);

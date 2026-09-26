@@ -136,6 +136,11 @@ function unitContext(cwd) {
   } catch (e) { /* not a git dir */ }
   return null;
 }
+function worktreesHolding(branch) {
+  const r = git(['worktree', 'list', '--porcelain']); const out = []; let cur = null;
+  for (const line of r.out.split('\n')) { if (line.startsWith('worktree ')) cur = line.slice(9); else if (line.startsWith('branch ') && cur && line.slice(7) === 'refs/heads/' + branch) out.push(cur); }
+  return out;
+}
 function loadCard(e, u) { return readJSON(path.join(unitDir(e, u), 'card.json'), null); }
 function loadState(e) { return readJSON(path.join(epicDir(e), 'state.json'), { epic: e, stage: 'intake', units: {}, human_escalations: 0, waves_done: [], events: [] }); }
 function saveState(e, s) { writeJSON(path.join(epicDir(e), 'state.json'), s); }
@@ -347,6 +352,9 @@ commands.unit = ({ pos, opt }) => {
     if (path.resolve(top) === path.resolve(ROOT) && !opt['allow-main']) fail('unit start must run inside an isolated worktree, not the main checkout (agents: isolation: worktree)');
     const br = branchOf(e, u);
     const has = git(['rev-parse', '--verify', '--quiet', br], cwd).code === 0;
+    // a previous role's worktree (prober, earlier executor round) may still hold the branch: release it (detach that worktree)
+    const released = [];
+    if (has) for (const wt of worktreesHolding(br)) { if (path.resolve(wt) !== path.resolve(cwd)) { const d = git(['checkout', '-q', '--detach'], wt); released.push({ worktree: wt, ok: d.code === 0, err: d.err }); } }
     const r = has ? git(['checkout', '-q', br], cwd) : git(['checkout', '-q', '-b', br, card.base_sha], cwd);
     if (r.code !== 0) fail(`checkout failed: ${r.err}`);
     writeJSON(path.join(cwd, '.sep-role'), { role, epic: e, unit: u, worktree: cwd, started: nowISO() });
@@ -355,7 +363,7 @@ commands.unit = ({ pos, opt }) => {
     const st = loadState(e); const us = unitState(st, u); us.stage = role === 'prober' ? 'spike' : 'execute'; us.attempt++; saveState(e, st);
     metric(e, u, { stage: us.stage, event: 'unit_start', role, attempt: us.attempt });
     const zone = zoneById(card.zone);
-    return out({ branch: br, base_sha: card.base_sha, role, writes: card.writes, test_writes: card.test_writes || [], zone: zone.id, commands: zone.commands, checks: card.checks });
+    return out({ branch: br, base_sha: card.base_sha, role, writes: card.writes, test_writes: card.test_writes || [], zone: zone.id, commands: zone.commands, checks: card.checks, released });
   }
   if (sub === 'run') {
     const cmd = pos.slice(3).join(' ');
@@ -383,7 +391,8 @@ commands.unit = ({ pos, opt }) => {
     const st = loadState(e); const us = unitState(st, u); us.head_sha = head; us.stage = ctx.role === 'prober' ? 'spiked' : 'executed'; saveState(e, st);
     if (ctx.role === 'prober') { card.tests_sha = head; writeJSON(path.join(unitDir(e, u), 'card.json'), card); }
     metric(e, u, { stage: us.stage, event: 'unit_finish', head, files: ev.files_touched.length, commands: ev.commands.length });
-    return out({ head_sha: head, files_touched: ev.files_touched, commands_recorded: ev.commands.length });
+    git(['checkout', '-q', '--detach'], cwd); // free the branch for the next role's worktree
+    return out({ head_sha: head, files_touched: ev.files_touched, commands_recorded: ev.commands.length, detached: true });
   }
   if (sub === 'packet') {
     const d = unitDir(e, u); const zone = zoneById(card.zone);

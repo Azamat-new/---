@@ -20,7 +20,19 @@ const SEP = 'node .separator/bin/sep.cjs'
 const MAX_ITER = args.max_iterations || 60
 const AUTH = 'The workflow authorizes every git and file operation named in this task inside your isolated worktree; do not ask for confirmation.'
 
-const RUN = { type: 'object', properties: { ok: { type: 'boolean' }, step: { type: 'string' }, action: { type: 'string' }, target: { type: 'string' }, pass: { type: 'boolean' }, epic: { type: 'string' }, class: { type: 'string' }, units: { type: 'array', items: {} }, errors: { type: 'array', items: {} }, error: { type: 'string' }, raw: { type: 'string' } } }
+const RUN = { type: 'object', properties: { json: { type: 'string', description: 'the exact JSON text the command printed on stdout, copied verbatim (or {"ok":false,"error":"..."} if it printed none)' } }, required: ['json'] }
+// runners return the printed JSON as text; parse it (tolerating fences and prefixes)
+function unwrap(r) {
+  if (!r || typeof r !== 'object') return r
+  const txt = typeof r.json === 'string' ? r.json : (typeof r.raw === 'string' ? r.raw : null)
+  if (txt !== null) {
+    const fence = /```(?:json)?\s*([\s\S]*?)```/.exec(txt)
+    const cand = [fence ? fence[1] : null, txt, txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)].filter(Boolean)
+    for (const c of cand) { try { const v = JSON.parse(c); if (v && typeof v === 'object') return v } catch (e) { } }
+    return { ok: false, error: 'unparseable runner output: ' + txt.slice(0, 300) }
+  }
+  return r
+}
 
 // mechanical step: a cheap runner agent executes one command and returns the JSON it printed
 let cheapModel = 'haiku'
@@ -30,10 +42,10 @@ async function cheap(prompt, opts) {
   catch (e) { if (cheapModel && /model/i.test(String(e && e.message || e))) { log(`model '${cheapModel}' not available for runners; using the session model`); cheapModel = null; return await agent(prompt, Object.assign({ effort: 'low' }, opts)) } throw e }
 }
 async function run(cmd, label, opts) {
-  const r = await cheap(`You are a command runner (no judgment, no fixes). From the repository root run exactly this command with Bash:\n\n${cmd}\n\nReturn the ENTIRE JSON object the command printed on stdout, with all of its keys (ignore the exit code; sep prints JSON even on failure). If it printed no JSON, return {"ok": false, "error": "<last 400 characters of the output>"}.`,
+  const r = await cheap(`You are a command runner (no judgment, no fixes). From the repository root run exactly this command with Bash:\n\n${cmd}\n\nReturn, in the field "json", the EXACT JSON text the command printed on stdout, copied verbatim and complete (ignore the exit code; sep prints JSON even on failure). If it printed no JSON, put {"ok": false, "error": "<last 400 characters of the output>"} there.`,
     Object.assign({ label: label || cmd.slice(0, 60), schema: RUN }, opts || {}))
   if (!r) return { ok: false, error: 'runner returned nothing' }
-  return r
+  return unwrap(r)
 }
 
 // role step: use the registered custom agent when the session knows it (enforced mode: restricted tools,
@@ -50,8 +62,8 @@ async function role(name, prompt, opts) {
 
 async function record(e, u, name, json, thenCmd) {
   const p = `.separator/epics/${e}/units/${u}/${name}`
-  const r = await cheap(`You are a recorder (no judgment). 1) With the Write tool, write this JSON to ${p} exactly as given (pretty-printed is fine):\n${JSON.stringify(json)}\n2) Then run with Bash from the repository root: ${thenCmd}\n3) Return the ENTIRE JSON object that command printed; if it printed no JSON return {"ok": false, "error": "<last 400 chars>"}.`, { label: `record:${name}`, schema: RUN })
-  return r || { ok: false, error: 'recorder returned nothing' }
+  const r = await cheap(`You are a recorder (no judgment). 1) With the Write tool, write this JSON to ${p} exactly as given (pretty-printed is fine):\n${JSON.stringify(json)}\n2) Then run with Bash from the repository root: ${thenCmd}\n3) Return, in the field "json", the exact JSON text that command printed (verbatim); if it printed no JSON put {"ok": false, "error": "<last 400 chars>"} there.`, { label: `record:${name}`, schema: RUN })
+  return unwrap(r) || { ok: false, error: 'recorder returned nothing' }
 }
 
 // -------------------------------------------------------------------------------------------------

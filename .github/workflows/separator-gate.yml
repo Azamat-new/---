@@ -1,0 +1,35 @@
+name: separator-gate
+# Enforcement floor that needs no AI tooling: the harness must lint and self-test on every push and PR,
+# merge commits produced by `sep merge` must carry their decision trailers, and the demo must stay green.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: harness lint
+        run: node .separator/bin/sep.cjs lint
+      - name: harness self-test
+        run: node .separator/bin/sep.cjs selftest
+      - name: demo tests
+        run: cd examples/demo && npm test
+      - name: separator merge commits carry a decision trailer
+        run: |
+          bad=0
+          for c in $(git log --merges --format=%H -n 50 -- . ); do
+            msg=$(git log -1 --format=%B "$c")
+            case "$msg" in
+              *"Separator-Unit:"*)
+                echo "$msg" | grep -q "Separator-Diff:" || { echo "merge $c has a unit trailer but no diff hash"; bad=1; };;
+            esac
+          done
+          exit $bad

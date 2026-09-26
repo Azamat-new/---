@@ -1,0 +1,3 @@
+#!/bin/sh
+# thin wrapper: .separator/bin/sep <command> ...  ==  node .separator/bin/sep.cjs <command> ...
+exec node "$(dirname "$0")/sep.cjs" "$@"

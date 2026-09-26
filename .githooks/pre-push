@@ -1,0 +1,19 @@
+#!/bin/sh
+# Separator pre-push guard (enable with: git config core.hooksPath .githooks — `sep init` does it).
+# 1. unit branches (sep/<epic>/<unit>) are local work-in-progress and never leave the machine;
+# 2. pushing integration or main requires the harness self-test and lint to pass.
+set -e
+remote="$1"
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$local_ref" in
+    refs/heads/sep/*)
+      echo "separator: refusing to push unit branch $local_ref (units are merged through 'sep merge', not pushed)" >&2
+      exit 1;;
+    refs/heads/integration|refs/heads/main|refs/heads/master)
+      if [ -f .separator/bin/sep.cjs ]; then
+        node .separator/bin/sep.cjs lint >/dev/null || { echo "separator: lint failed; fix before pushing $local_ref" >&2; exit 1; }
+        node .separator/bin/sep.cjs selftest >/dev/null || { echo "separator: selftest failed; the harness is not trustworthy; fix before pushing $local_ref" >&2; exit 1; }
+      fi;;
+  esac
+done
+exit 0

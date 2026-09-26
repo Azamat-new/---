@@ -3,3 +3,4 @@
 {"ts":"2026-09-26T13:12:23.868Z","epic":"selftest-a2fa","unit":"U1","stage":"verdict","event":"decide","row":1,"action":"ESCALATE","target":"H3","class":"T1"}
 {"ts":"2026-09-26T13:17:29.420Z","epic":"20260926-add-a-remove-command-to--6ace","unit":null,"stage":"decompose","event":"plan_check","ok":true,"units":1,"waves":1}
 {"ts":"2026-09-26T13:17:51.593Z","epic":"20260926-add-a-remove-command-to--6ace","unit":"U1","stage":"spike","event":"unit_start","role":"prober","attempt":1}
+{"ts":"2026-09-26T13:22:26.233Z","epic":"20260926-add-a-remove-command-to--6ace","unit":"U1","stage":"spiked","event":"unit_finish","head":"7ef7f0d84a2145bd137714e4bd908cb76042816a","files":1,"commands":2}

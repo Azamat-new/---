@@ -83,7 +83,7 @@ Hierarchy: managed → `~/.claude/CLAUDE.md` → project `./CLAUDE.md` or `./.cl
 `"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}`; lead + teammates (separate sessions), shared task list `.claude/tasks/<team>/`, mailboxes, `SendMessage`, `TaskCreate/TaskGet/TaskList/TaskUpdate`. Limitations: no resume of teammates, one team per session, no nested teams. Treat as optional; the reference implementation must not depend on it.
 
 ## 9. EMPIRICAL FINDINGS in this environment (Claude Code 2.1.283, tested 2026-09-26) — THESE OVERRIDE ASSUMPTIONS
-1. **Custom agents are registered at session start (the registry may refresh later in the session, but not reliably).** `.claude/agents/*.md` written mid-session are NOT visible to the
+1. **Custom agents are registered only at session start.** `.claude/agents/*.md` written mid-session are NOT visible to the
    Workflow `agentType` registry nor to the Agent tool; `agent(prompt,{agentType:'x'})` with an unknown type THROWS
    ("agent type 'x' not found. Available agents: claude, claude-code-guide, Explore, general-purpose, Plan, statusline-setup")
    and kills the workflow unless caught. A FRESH process (`claude -p` in the project dir) does load them. Consequence:
